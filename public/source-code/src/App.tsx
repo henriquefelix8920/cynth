@@ -13,7 +13,7 @@ function LoadingScreen({ onComplete }: { onComplete: () => void }) {
     return () => clearInterval(interval);
   }, [onComplete]);
   return (
-    <motion.div exit={{ opacity: 0, scale: 1.05 }} transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }} className="fixed inset-0 z-[9999] bg-dark flex flex-col items-center justify-center">
+    <motion.div exit={{ opacity: 0, scale: 1.05 }} transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }} className="fixed inset-0 z-[10000] bg-dark flex flex-col items-center justify-center">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} className="text-center">
         <h1 className="font-serif text-4xl md:text-5xl font-light text-cream mb-8 tracking-wider"><span className="text-crimson">E</span>xclusiva</h1>
         <div className="w-48 h-px bg-cream/10 mx-auto overflow-hidden"><motion.div className="h-full bg-gradient-to-r from-crimson to-rose" style={{ width: `${progress}%` }} /></div>
@@ -47,7 +47,7 @@ function Navigation({ scrolled }: { scrolled: boolean }) {
   const [menuOpen, setMenuOpen] = useState(false);
   return (
     <>
-      <motion.nav initial={{ y: -100, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 1, delay: 1.5 }} className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-700 ${scrolled ? 'py-3 glass-subtle' : 'py-6 bg-transparent'}`}>
+      <motion.nav initial={{ y: -100, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 1, delay: 1.5 }} className={`fixed top-0 left-0 right-0 z-[500] transition-all duration-700 ${scrolled ? 'py-3 glass-subtle' : 'py-6 bg-transparent'}`}>
         <div className="max-w-7xl mx-auto px-6 md:px-12 flex items-center justify-between">
           <motion.a href="#" className="font-serif text-2xl md:text-3xl font-light tracking-wider text-cream" whileHover={{ scale: 1.02 }}><span className="text-crimson">E</span>xclusiva</motion.a>
           <div className="hidden md:flex items-center gap-10">
@@ -63,7 +63,7 @@ function Navigation({ scrolled }: { scrolled: boolean }) {
       </motion.nav>
       <AnimatePresence>
         {menuOpen && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }} className="fixed inset-0 z-[99] bg-dark/98 backdrop-blur-xl flex flex-col items-center justify-center gap-8 md:hidden">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }} className="fixed inset-0 z-[999] bg-dark/98 backdrop-blur-xl flex flex-col items-center justify-center gap-8 md:hidden">
             {['Experiência', 'Galeria', 'Contato'].map((item, i) => (<motion.a key={item} href={`#${item.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')}`} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }} onClick={() => setMenuOpen(false)} className="font-serif text-4xl font-light text-cream/80 hover:text-crimson transition-colors">{item}</motion.a>))}
           </motion.div>
         )}
@@ -207,7 +207,7 @@ function CinematicMoment() {
     <section ref={sectionRef} className="relative h-[160vh]">
       <div className="sticky top-0 h-screen overflow-hidden flex items-center justify-center">
         <motion.div style={{ scale, opacity, rotate }} className="absolute inset-[-5%]">
-          <img src="https://image.qwenlm.ai/generated-images/19609062-4991-48b6-8239-27f3c021f9cb/_result.png" alt="Ambiente cinematográfico" className="w-full h-full object-cover" />
+          <img src="/02-fotofrente.jpg" alt="Ambiente cinematográfico" className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-dark/50" />
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_30%,_rgba(26,0,0,0.7)_100%)]" />
         </motion.div>
@@ -224,7 +224,7 @@ function GallerySection() {
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
   const [selectedImage, setSelectedImage] = useState<number | null>(null);
-  const galleryImages = [{ src: "/02-fotofrente.jpg", alt: "Galeria 1", span: "row-span-2" }, { src: "/03-fotofrente.jpg", alt: "Galeria 2", span: "row-span-1" }, { src: "https://image.qwenlm.ai/generated-images/3eea652f-563e-4b70-86d2-2f8885642e5d/_result.png", alt: "Galeria 3", span: "row-span-1" }, { src: "https://image.qwenlm.ai/generated-images/974ebdfc-7ff2-4015-bad2-dfd1d49ce57f/_result.png", alt: "Galeria 4", span: "row-span-2" }, { src: "https://image.qwenlm.ai/generated-images/ab547c9b-1444-4a49-93b3-46995b295d7f/_result.png", alt: "Galeria 5", span: "row-span-1" }, { src: "https://image.qwenlm.ai/generated-images/19609062-4991-48b6-8239-27f3c021f9cb/_result.png", alt: "Galeria 6", span: "row-span-1" }];
+  const galleryImages = [{ src: "/02-fotofrente.jpg", alt: "Galeria 1", span: "row-span-2" }, { src: "/03-fotofrente.jpg", alt: "Galeria 2", span: "row-span-1" }, { src: "/02-fotofrente.jpg", alt: "Galeria 3", span: "row-span-1" }, { src: "/03-fotofrente.jpg", alt: "Galeria 4", span: "row-span-2" }, { src: "/02-fotofrente.jpg", alt: "Galeria 5", span: "row-span-1" }, { src: "/03-fotofrente.jpg", alt: "Galeria 6", span: "row-span-1" }];
   const y1 = useTransform(scrollYProgress, [0, 1], [0, -80]);
   const y2 = useTransform(scrollYProgress, [0, 1], [0, -40]);
   useEffect(() => {
@@ -246,7 +246,7 @@ function GallerySection() {
         </div>
       </div>
       <AnimatePresence>
-        {selectedImage !== null && (<motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }} className="fixed inset-0 z-[200] bg-dark/97 backdrop-blur-2xl flex items-center justify-center p-4 md:p-8" onClick={() => setSelectedImage(null)}><motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }} className="relative max-w-5xl max-h-[85vh] w-full" onClick={(e) => e.stopPropagation()}><img src={galleryImages[selectedImage].src} alt={galleryImages[selectedImage].alt} className="w-full h-full object-contain" /><button onClick={(e) => { e.stopPropagation(); setSelectedImage(selectedImage > 0 ? selectedImage - 1 : galleryImages.length - 1); }} className="absolute left-2 md:left-6 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center border border-cream/20 text-cream/70 hover:border-crimson hover:text-crimson transition-all duration-300" aria-label="Anterior">←</button><button onClick={(e) => { e.stopPropagation(); setSelectedImage(selectedImage < galleryImages.length - 1 ? selectedImage + 1 : 0); }} className="absolute right-2 md:right-6 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center border border-cream/20 text-cream/70 hover:border-crimson hover:text-crimson transition-all duration-300" aria-label="Próxima">→</button><button onClick={() => setSelectedImage(null)} className="absolute -top-8 md:-top-12 right-0 text-cream/50 hover:text-cream text-xs tracking-wider uppercase transition-colors" aria-label="Fechar">Fechar ✕</button><div className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-cream/40 text-[10px] tracking-[0.3em]">{String(selectedImage + 1).padStart(2, '0')} / {String(galleryImages.length).padStart(2, '0')}</div></motion.div></motion.div>)}
+        {selectedImage !== null && (<motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }} className="fixed inset-0 z-[1000] bg-dark/97 backdrop-blur-2xl flex items-center justify-center p-4 md:p-8" onClick={() => setSelectedImage(null)}><motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }} className="relative max-w-5xl max-h-[85vh] w-full" onClick={(e) => e.stopPropagation()}><img src={galleryImages[selectedImage].src} alt={galleryImages[selectedImage].alt} className="w-full h-full object-contain" /><button onClick={(e) => { e.stopPropagation(); setSelectedImage(selectedImage > 0 ? selectedImage - 1 : galleryImages.length - 1); }} className="absolute left-2 md:left-6 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center border border-cream/20 text-cream/70 hover:border-crimson hover:text-crimson transition-all duration-300" aria-label="Anterior">←</button><button onClick={(e) => { e.stopPropagation(); setSelectedImage(selectedImage < galleryImages.length - 1 ? selectedImage + 1 : 0); }} className="absolute right-2 md:right-6 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center border border-cream/20 text-cream/70 hover:border-crimson hover:text-crimson transition-all duration-300" aria-label="Próxima">→</button><button onClick={() => setSelectedImage(null)} className="absolute -top-8 md:-top-12 right-0 text-cream/50 hover:text-cream text-xs tracking-wider uppercase transition-colors" aria-label="Fechar">Fechar ✕</button><div className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-cream/40 text-[10px] tracking-[0.3em]">{String(selectedImage + 1).padStart(2, '0')} / {String(galleryImages.length).padStart(2, '0')}</div></motion.div></motion.div>)}
       </AnimatePresence>
     </section>
   );

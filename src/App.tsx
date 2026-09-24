@@ -25,7 +25,7 @@ function LoadingScreen({ onComplete }: { onComplete: () => void }) {
     <motion.div
       exit={{ opacity: 0, scale: 1.05 }}
       transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
-      className="fixed inset-0 z-[9999] bg-dark flex flex-col items-center justify-center"
+      className="fixed inset-0 z-[10000] bg-dark flex flex-col items-center justify-center"
     >
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -103,7 +103,7 @@ function Navigation({ scrolled }: { scrolled: boolean }) {
         initial={{ y: -100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 1, delay: 1.5 }}
-        className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-700 ${
+        className={`fixed top-0 left-0 right-0 z-[500] transition-all duration-700 ${
           scrolled ? 'py-3 glass-subtle' : 'py-6 bg-transparent'
         }`}
       >
@@ -164,7 +164,7 @@ function Navigation({ scrolled }: { scrolled: boolean }) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="fixed inset-0 z-[99] bg-dark/98 backdrop-blur-xl flex flex-col items-center justify-center gap-8 md:hidden"
+            className="fixed inset-0 z-[999] bg-dark/98 backdrop-blur-xl flex flex-col items-center justify-center gap-8 md:hidden"
           >
             {['Experiência', 'Galeria', 'Contato'].map((item, i) => (
               <motion.a
@@ -633,7 +633,7 @@ function CinematicMoment() {
           className="absolute inset-[-5%]"
         >
           <img
-            src="https://image.qwenlm.ai/generated-images/19609062-4991-48b6-8239-27f3c021f9cb/_result.png"
+            src="/02-fotofrente.jpg"
             alt="Ambiente cinematográfico"
             className="w-full h-full object-cover"
           />
@@ -677,10 +677,10 @@ function GallerySection() {
   const galleryImages = [
     { src: "/02-fotofrente.jpg", alt: "Galeria 1", span: "row-span-2" },
     { src: "/03-fotofrente.jpg", alt: "Galeria 2", span: "row-span-1" },
-    { src: "https://image.qwenlm.ai/generated-images/3eea652f-563e-4b70-86d2-2f8885642e5d/_result.png", alt: "Galeria 3", span: "row-span-1" },
-    { src: "https://image.qwenlm.ai/generated-images/974ebdfc-7ff2-4015-bad2-dfd1d49ce57f/_result.png", alt: "Galeria 4", span: "row-span-2" },
-    { src: "https://image.qwenlm.ai/generated-images/ab547c9b-1444-4a49-93b3-46995b295d7f/_result.png", alt: "Galeria 5", span: "row-span-1" },
-    { src: "https://image.qwenlm.ai/generated-images/19609062-4991-48b6-8239-27f3c021f9cb/_result.png", alt: "Galeria 6", span: "row-span-1" },
+    { src: "/02-fotofrente.jpg", alt: "Galeria 3", span: "row-span-1" },
+    { src: "/03-fotofrente.jpg", alt: "Galeria 4", span: "row-span-2" },
+    { src: "/02-fotofrente.jpg", alt: "Galeria 5", span: "row-span-1" },
+    { src: "/03-fotofrente.jpg", alt: "Galeria 6", span: "row-span-1" },
   ];
   
   const y1 = useTransform(scrollYProgress, [0, 1], [0, -80]);
@@ -760,7 +760,7 @@ function GallerySection() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.4 }}
-            className="fixed inset-0 z-[200] bg-dark/97 backdrop-blur-2xl flex items-center justify-center p-4 md:p-8"
+            className="fixed inset-0 z-[1000] bg-dark/97 backdrop-blur-2xl flex items-center justify-center p-4 md:p-8"
             onClick={() => setSelectedImage(null)}
           >
             <motion.div
