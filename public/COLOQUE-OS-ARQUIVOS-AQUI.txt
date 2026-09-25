@@ -1,7 +1,9 @@
-COLOQUE AQUI (nesta pasta /public, na raiz):
+ARQUIVOS DE MÍDIA — JÁ ADICIONADOS ✔
 
-01-video.mp4        <- video do hero (controlado pelo scroll)
-02-fotofrente.jpg   <- foto 1
-03-fotofrente.jpg   <- foto 2
+Os arquivos abaixo estão na pasta /public com estes nomes:
+  01-videofundo.mp4    (vídeo do hero, controlado pelo scroll)
+  02-modelofrente.jpg  (foto 1 — seção Sobre + galeria)
+  03-modelofrente.jpg  (foto 2 — momento de impacto + galeria)
 
-Os nomes devem ser EXATAMENTE esses (minúsculos, sem acento).
+Para substituir por novas mídias no futuro: envie arquivos com os MESMOS nomes.
+Se usar nomes diferentes, avise para atualizar o código.

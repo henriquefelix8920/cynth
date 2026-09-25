@@ -113,7 +113,7 @@ function ScrollVideo({ className }: { className?: string }) {
           onError={() => setHasVideo(false)}
           tabIndex={-1}
         >
-          <source src="/01-video.mp4" type="video/mp4" />
+          <source src="/01-videofundo.mp4" type="video/mp4" />
         </video>
       )}
     </div>
@@ -539,7 +539,7 @@ function AboutSection() {
           <div className="relative aspect-[3/4] overflow-hidden">
             <motion.img
               style={{ y: imgY }}
-              src="/02-fotofrente.jpg"
+              src="/02-modelofrente.jpg"
               alt="Retrato editorial da Vitória em clima sofisticado"
               loading="lazy"
               className="absolute inset-[-10%] h-[120%] w-full object-cover object-top"
@@ -754,7 +754,7 @@ function StatementSection() {
       <div className="sticky top-0 h-screen overflow-hidden">
         <motion.div style={{ scale, y: imgY }} className="absolute inset-[-6%]">
           <img
-            src="/03-fotofrente.jpg"
+            src="/03-modelofrente.jpg"
             alt="Vitória em composição editorial de forte contraste cromático"
             loading="lazy"
             className="h-full w-full object-cover object-center"
@@ -788,10 +788,10 @@ function StatementSection() {
    GALERIA — scroll horizontal com parallax interno + lightbox
 ------------------------------------------------------------ */
 const GALLERY = [
-  { src: '/02-fotofrente.jpg', alt: 'Composição editorial I', label: 'Ensaio · 01' },
-  { src: '/03-fotofrente.jpg', alt: 'Composição editorial II', label: 'Ensaio · 02' },
-  { src: '/02-fotofrente.jpg', alt: 'Composição editorial III', label: 'Bastidores · 03' },
-  { src: '/03-fotofrente.jpg', alt: 'Composição editorial IV', label: 'Bastidores · 04' },
+  { src: '/02-modelofrente.jpg', alt: 'Composição editorial I', label: 'Ensaio · 01' },
+  { src: '/03-modelofrente.jpg', alt: 'Composição editorial II', label: 'Ensaio · 02' },
+  { src: '/02-modelofrente.jpg', alt: 'Composição editorial III', label: 'Bastidores · 03' },
+  { src: '/03-modelofrente.jpg', alt: 'Composição editorial IV', label: 'Bastidores · 04' },
 ];
 
 function GallerySection() {
