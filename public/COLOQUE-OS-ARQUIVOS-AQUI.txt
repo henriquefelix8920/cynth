@@ -1,0 +1,7 @@
+COLOQUE AQUI (nesta pasta /public, na raiz):
+
+01-video.mp4        <- video do hero (controlado pelo scroll)
+02-fotofrente.jpg   <- foto 1
+03-fotofrente.jpg   <- foto 2
+
+Os nomes devem ser EXATAMENTE esses (minúsculos, sem acento).
