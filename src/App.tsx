@@ -1,184 +1,328 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
-import { motion, useScroll, useTransform, useSpring, useInView, AnimatePresence } from 'framer-motion';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  motion,
+  AnimatePresence,
+  useScroll,
+  useTransform,
+  useSpring,
+  useInView,
+} from 'framer-motion';
 
-// ============================================
-// LOADING SCREEN
-// ============================================
-function LoadingScreen({ onComplete }: { onComplete: () => void }) {
-  const [progress, setProgress] = useState(0);
-  
+/* ============================================================
+   DIREÇÃO CRIATIVA — "ESCULPIDA EM VERMELHO"
+   Paleta: #1A0000 (noite) · #3E0404 (borgonha) · #BF0002 (carmesim) · #FF6686 (rosa)
+   Tipografia: Cormorant Garamond (editorial) + Inter (corpo claro)
+   O scroll funciona como narrativa:
+   1. Vídeo scrubado pelo scroll (hero cinematográfico)
+   2. Revelação em cortina entre blocos (transição memorável)
+   3. Galeria horizontal pinning com parallax interno
+   4. Frase gigante sobre fotografia fixa (momento de impacto)
+   ============================================================ */
+
+const EASE = [0.22, 1, 0.36, 1] as const;
+
+function slug(s: string) {
+  return s
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
+/* ------------------------------------------------------------
+   PREFERS REDUCED MOTION
+------------------------------------------------------------ */
+function usePrefersReducedMotion() {
+  const [reduced, setReduced] = useState(false);
   useEffect(() => {
-    const interval = setInterval(() => {
-      setProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setTimeout(onComplete, 500);
-          return 100;
-        }
-        return prev + 2;
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const update = () => setReduced(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
+  return reduced;
+}
+
+/* ------------------------------------------------------------
+   SCROLL-DRIVEN VIDEO
+   O vídeo 01-video.mp4 é controlado pelo scroll do mouse.
+   Se o arquivo ainda não foi enviado, um fundo vivo em
+   carmesim assume o lugar sem quebrar a experiência.
+------------------------------------------------------------ */
+function ScrollVideo({ className }: { className?: string }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [hasVideo, setHasVideo] = useState(true);
+  const reduced = usePrefersReducedMotion();
+
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v || !hasVideo) return;
+
+    let duration = 0;
+    let ticking = false;
+
+    const onMeta = () => {
+      duration = v.duration && isFinite(v.duration) ? v.duration : 0;
+      if (duration > 0) {
+        // pausa total: o scroll é o controle remoto
+        v.pause();
+        v.currentTime = 0;
+      } else {
+        setHasVideo(false);
+      }
+    };
+
+    const onScroll = () => {
+      if (ticking || duration === 0) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        const doc = document.documentElement;
+        const max = doc.scrollHeight - window.innerHeight;
+        const p = max > 0 ? Math.min(Math.max(window.scrollY / max, 0), 1) : 0;
+        v.currentTime = p * (duration - 0.05);
+        ticking = false;
       });
-    }, 30);
-    return () => clearInterval(interval);
+    };
+
+    onMeta();
+    v.addEventListener('loadedmetadata', onMeta);
+    if (!reduced) {
+      window.addEventListener('scroll', onScroll, { passive: true });
+      onScroll();
+    }
+    return () => {
+      v.removeEventListener('loadedmetadata', onMeta);
+      window.removeEventListener('scroll', onScroll);
+    };
+  }, [hasVideo, reduced]);
+
+  return (
+    <div className={`absolute inset-0 ${className ?? ''}`} aria-hidden="true">
+      {/* fallback vivo — aparece atrás do vídeo e quando ele não existe */}
+      <div className="absolute inset-0 bg-dark">
+        <div className="video-pulse absolute inset-[-20%]" />
+        <div className="video-drift absolute inset-[-20%]" />
+      </div>
+      {hasVideo && (
+        <video
+          ref={videoRef}
+          className="relative h-full w-full object-cover"
+          muted
+          playsInline
+          preload="auto"
+          onError={() => setHasVideo(false)}
+          tabIndex={-1}
+        >
+          <source src="/01-video.mp4" type="video/mp4" />
+        </video>
+      )}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------
+   LOADING — contagem cinematográfica
+------------------------------------------------------------ */
+function LoadingScreen({ onComplete }: { onComplete: () => void }) {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    const start = performance.now();
+    let raf = 0;
+    const tick = (t: number) => {
+      const p = Math.min((t - start) / 1700, 1);
+      const eased = 1 - Math.pow(1 - p, 3);
+      setCount(Math.round(eased * 100));
+      if (p < 1) raf = requestAnimationFrame(tick);
+      else setTimeout(onComplete, 450);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
   }, [onComplete]);
 
   return (
     <motion.div
-      exit={{ opacity: 0, scale: 1.05 }}
-      transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
-      className="fixed inset-0 z-[10000] bg-dark flex flex-col items-center justify-center"
+      exit={{ clipPath: 'inset(0 0 100% 0)' }}
+      transition={{ duration: 1.1, ease: EASE }}
+      className="fixed inset-0 z-[10000] flex flex-col items-center justify-center bg-dark"
     >
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8 }}
-        className="text-center"
-      >
-        <h1 className="font-serif text-4xl md:text-5xl font-light text-cream mb-8 tracking-wider">
-          <span className="text-crimson">E</span>xclusiva
-        </h1>
-        
-        {/* Progress bar */}
-        <div className="w-48 h-px bg-cream/10 mx-auto overflow-hidden">
-          <motion.div
-            className="h-full bg-gradient-to-r from-crimson to-rose"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-        
-        <p className="text-cream/30 text-[10px] tracking-[0.4em] uppercase mt-4">
-          Carregando experiência
-        </p>
-      </motion.div>
+      <p className="mb-6 text-[10px] font-light uppercase tracking-[0.5em] text-rose/60">
+        Prévia conceitual
+      </p>
+      <h1 className="font-serif text-7xl font-light text-cream md:text-8xl">
+        {count}
+        <span className="text-crimson">%</span>
+      </h1>
+      <div className="mt-8 h-px w-52 overflow-hidden bg-cream/10">
+        <div
+          className="h-full bg-gradient-to-r from-crimson to-rose transition-[width] duration-100"
+          style={{ width: `${count}%` }}
+        />
+      </div>
+      <p className="mt-5 text-[9px] uppercase tracking-[0.4em] text-cream/25">
+        Preparando a experiência
+      </p>
     </motion.div>
   );
 }
 
-// ============================================
-// CURSOR GLOW (Desktop only)
-// ============================================
-function CursorGlow() {
-  const glowRef = useRef<HTMLDivElement>(null);
-  
-  useEffect(() => {
-    // Only enable on desktop
-    if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
-      const handleMouseMove = (e: MouseEvent) => {
-        if (glowRef.current) {
-          glowRef.current.style.left = `${e.clientX}px`;
-          glowRef.current.style.top = `${e.clientY}px`;
-        }
-      };
-      window.addEventListener('mousemove', handleMouseMove);
-      return () => window.removeEventListener('mousemove', handleMouseMove);
-    }
-  }, []);
-  
-  return <div ref={glowRef} className="cursor-glow hidden md:block" />;
-}
+/* ------------------------------------------------------------
+   CURSOR — anel + halo (desktop apenas)
+------------------------------------------------------------ */
+function CustomCursor() {
+  const ringRef = useRef<HTMLDivElement>(null);
+  const haloRef = useRef<HTMLDivElement>(null);
 
-// ============================================
-// SCROLL PROGRESS BAR
-// ============================================
-function ScrollProgress() {
-  const { scrollYProgress } = useScroll();
-  const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30 });
-  
+  useEffect(() => {
+    if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+    const ring = ringRef.current;
+    const halo = haloRef.current;
+    if (!ring || !halo) return;
+
+    let x = window.innerWidth / 2;
+    let y = window.innerHeight / 2;
+    let rx = x;
+    let ry = y;
+    let raf = 0;
+
+    const move = (e: MouseEvent) => {
+      x = e.clientX;
+      y = e.clientY;
+      halo.style.left = `${x}px`;
+      halo.style.top = `${y}px`;
+      const interactive = (e.target as HTMLElement)?.closest?.('a, button, [data-cursor]');
+      ring.classList.toggle('is-hovering', !!interactive);
+    };
+    const loop = () => {
+      rx += (x - rx) * 0.16;
+      ry += (y - ry) * 0.16;
+      ring.style.left = `${rx}px`;
+      ring.style.top = `${ry}px`;
+      raf = requestAnimationFrame(loop);
+    };
+    window.addEventListener('mousemove', move);
+    raf = requestAnimationFrame(loop);
+    return () => {
+      window.removeEventListener('mousemove', move);
+      cancelAnimationFrame(raf);
+    };
+  }, []);
+
   return (
-    <motion.div
-      className="scroll-progress origin-left"
-      style={{ scaleX }}
-    />
+    <>
+      <div ref={haloRef} className="cursor-halo hidden md:block" aria-hidden="true" />
+      <div ref={ringRef} className="cursor-ring hidden md:block" aria-hidden="true" />
+    </>
   );
 }
 
-// ============================================
-// NAVIGATION
-// ============================================
+/* ------------------------------------------------------------
+   NAVEGAÇÃO — muda de aparência conforme o scroll
+------------------------------------------------------------ */
+const NAV_ITEMS = ['Experiência', 'Serviços', 'Galeria', 'Contato'];
+
 function Navigation({ scrolled }: { scrolled: boolean }) {
-  const [menuOpen, setMenuOpen] = useState(false);
-  
+  const [open, setOpen] = useState(false);
+
   return (
     <>
       <motion.nav
-        initial={{ y: -100, opacity: 0 }}
+        initial={{ y: -80, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 1, delay: 1.5 }}
-        className={`fixed top-0 left-0 right-0 z-[500] transition-all duration-700 ${
-          scrolled ? 'py-3 glass-subtle' : 'py-6 bg-transparent'
+        transition={{ duration: 1, delay: 0.3, ease: EASE }}
+        className={`fixed left-0 right-0 top-0 z-[500] transition-all duration-700 ${
+          scrolled
+            ? 'border-b border-cream/[0.06] bg-dark/85 py-3 backdrop-blur-md'
+            : 'bg-transparent py-7'
         }`}
       >
-        <div className="max-w-7xl mx-auto px-6 md:px-12 flex items-center justify-between">
-          <motion.a
-            href="#"
-            className="font-serif text-2xl md:text-3xl font-light tracking-wider text-cream"
-            whileHover={{ scale: 1.02 }}
-          >
-            <span className="text-crimson">E</span>xclusiva
-          </motion.a>
-          
-          <div className="hidden md:flex items-center gap-10">
-            {['Experiência', 'Galeria', 'Contato'].map((item) => (
+        <div className="mx-auto flex max-w-[1400px] items-center justify-between px-6 md:px-12">
+          <a href="#topo" className="group flex items-baseline gap-2" aria-label="Início">
+            <span className="font-serif text-2xl font-light tracking-wide text-cream">
+              <span className="italic text-crimson transition-colors duration-500 group-hover:text-rose">
+                V
+              </span>
+                      itória
+            </span>
+            <span className="hidden text-[8px] uppercase tracking-[0.4em] text-cream/30 sm:inline">
+              Estúdio pessoal
+            </span>
+          </a>
+
+          <div className="hidden items-center gap-9 md:flex">
+            {NAV_ITEMS.map((item) => (
               <a
                 key={item}
-                href={`#${item.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')}`}
-                className="relative text-sm font-light tracking-widest uppercase text-cream/70 hover:text-cream transition-colors duration-300 group"
+                href={`#${slug(item)}`}
+                className="group relative py-1 text-[11px] font-light uppercase tracking-[0.22em] text-cream/60 transition-colors duration-300 hover:text-cream"
               >
                 {item}
-                <span className="absolute bottom-0 left-0 w-0 h-px bg-crimson group-hover:w-full transition-all duration-500" />
+                <span className="absolute -bottom-0.5 left-0 h-px w-0 bg-crimson transition-all duration-500 group-hover:w-full" />
               </a>
             ))}
             <a
               href="#contato"
-              className="px-6 py-2.5 border border-crimson/50 text-sm tracking-widest uppercase text-cream hover:bg-crimson/10 hover:border-crimson transition-all duration-500"
+              className="btn-premium border border-crimson/60 px-6 py-2.5 text-[10px] uppercase tracking-[0.25em] text-cream transition-all duration-500 hover:border-crimson hover:bg-crimson/10"
             >
-              Agendar
+              Agendar horário
             </a>
           </div>
-          
+
           <button
-            onClick={() => setMenuOpen(!menuOpen)}
-            className="md:hidden flex flex-col gap-1.5 p-2"
-            aria-label="Menu"
+            onClick={() => setOpen(!open)}
+            aria-label={open ? 'Fechar menu' : 'Abrir menu'}
+            aria-expanded={open}
+            className="flex flex-col gap-[7px] p-2 md:hidden"
           >
             <motion.span
-              animate={menuOpen ? { rotate: 45, y: 6 } : { rotate: 0, y: 0 }}
-              className="w-6 h-px bg-cream block"
+              animate={open ? { rotate: 45, y: 8 } : { rotate: 0, y: 0 }}
+              className="block h-px w-7 bg-cream"
             />
             <motion.span
-              animate={menuOpen ? { opacity: 0 } : { opacity: 1 }}
-              className="w-6 h-px bg-cream block"
+              animate={open ? { opacity: 0, x: -10 } : { opacity: 1, x: 0 }}
+              className="block h-px w-5 self-end bg-rose"
             />
             <motion.span
-              animate={menuOpen ? { rotate: -45, y: -6 } : { rotate: 0, y: 0 }}
-              className="w-6 h-px bg-cream block"
+              animate={open ? { rotate: -45, y: -8 } : { rotate: 0, y: 0 }}
+              className="block h-px w-7 bg-cream"
             />
           </button>
         </div>
       </motion.nav>
-      
-      {/* Mobile Menu */}
+
       <AnimatePresence>
-        {menuOpen && (
+        {open && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="fixed inset-0 z-[999] bg-dark/98 backdrop-blur-xl flex flex-col items-center justify-center gap-8 md:hidden"
+            initial={{ clipPath: 'inset(0 0 100% 0)' }}
+            animate={{ clipPath: 'inset(0 0 0% 0)' }}
+            exit={{ clipPath: 'inset(0 0 100% 0)' }}
+            transition={{ duration: 0.7, ease: EASE }}
+            className="fixed inset-0 z-[490] flex flex-col items-center justify-center gap-8 bg-burgundy md:hidden"
           >
-            {['Experiência', 'Galeria', 'Contato'].map((item, i) => (
+            {NAV_ITEMS.map((item, i) => (
               <motion.a
                 key={item}
-                href={`#${item.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')}`}
-                initial={{ opacity: 0, y: 20 }}
+                href={`#${slug(item)}`}
+                onClick={() => setOpen(false)}
+                initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1 }}
-                onClick={() => setMenuOpen(false)}
-                className="font-serif text-4xl font-light text-cream/80 hover:text-crimson transition-colors"
+                transition={{ delay: 0.25 + i * 0.09, duration: 0.6, ease: EASE }}
+                className="font-serif text-5xl font-light text-cream/90"
               >
                 {item}
+                <span className="ml-3 align-super text-[10px] text-crimson">0{i + 1}</span>
               </motion.a>
             ))}
+            <motion.a
+              href="#contato"
+              onClick={() => setOpen(false)}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.7 }}
+              className="mt-6 border border-crimson px-10 py-4 text-[11px] uppercase tracking-[0.3em] text-cream"
+            >
+              Agendar horário
+            </motion.a>
           </motion.div>
         )}
       </AnimatePresence>
@@ -186,736 +330,764 @@ function Navigation({ scrolled }: { scrolled: boolean }) {
   );
 }
 
-// ============================================
-// HERO SECTION - CINEMATIC VIDEO
-// ============================================
+/* ------------------------------------------------------------
+   HERO — vídeo scrubado + câmera cinematográfica no scroll
+------------------------------------------------------------ */
 function HeroSection() {
-  const heroRef = useRef<HTMLDivElement>(null);
-  const [videoError, setVideoError] = useState(false);
+  const heroRef = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({
     target: heroRef,
-    offset: ["start start", "end start"]
+    offset: ['start start', 'end start'],
   });
-  
-  const videoScale = useTransform(scrollYProgress, [0, 1], [1, 1.4]);
-  const videoY = useTransform(scrollYProgress, [0, 1], [0, 100]);
-  const videoOpacity = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
-  const textY = useTransform(scrollYProgress, [0, 1], [0, 250]);
-  const textOpacity = useTransform(scrollYProgress, [0, 0.4], [1, 0]);
-  const overlayOpacity = useTransform(scrollYProgress, [0, 0.5, 1], [0.3, 0.6, 0.95]);
-  const titleScale = useTransform(scrollYProgress, [0, 0.5], [1, 1.2]);
+
+  const scale = useTransform(scrollYProgress, [0, 1], [1, 1.28]);
+  const layerSlow = useTransform(scrollYProgress, [0, 1], [0, 90]);
+  const layerFast = useTransform(scrollYProgress, [0, 1], [0, -220]);
+  const contentOpacity = useTransform(scrollYProgress, [0, 0.55], [1, 0]);
+  const vignette = useTransform(scrollYProgress, [0, 1], [0.35, 0.9]);
+  const barOpen = useTransform(scrollYProgress, [0, 0.85], ['8%', '0%']);
 
   return (
-    <section ref={heroRef} className="relative h-[250vh]">
+    <section ref={heroRef} id="topo" className="relative h-[260vh]">
       <div className="sticky top-0 h-screen overflow-hidden">
-        {/* Video Background */}
-        <motion.div
-          style={{ scale: videoScale, y: videoY, opacity: videoOpacity }}
-          className="absolute inset-0 w-full h-full"
-        >
-          {!videoError ? (
-            <video
-              autoPlay
-              muted
-              loop
-              playsInline
-              className="w-full h-full object-cover"
-              onError={() => setVideoError(true)}
-            >
-              <source src="/01-video.mp4" type="video/mp4" />
-            </video>
-          ) : (
-            <div className="w-full h-full bg-gradient-to-br from-burgundy via-dark to-burgundy">
-              {/* Animated gradient fallback */}
-              <div className="absolute inset-0 opacity-30">
-                <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_center,_rgba(191,0,2,0.3)_0%,_transparent_70%)]" />
-              </div>
-            </div>
-          )}
+        {/* vídeo dominando a tela inteira, reagindo ao scroll */}
+        <motion.div style={{ scale }} className="absolute inset-[-4%]">
+          <ScrollVideo />
         </motion.div>
-        
-        {/* Overlay */}
-        <motion.div
-          style={{ opacity: overlayOpacity }}
-          className="absolute inset-0 bg-dark"
-        />
-        
-        {/* Vignette */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_40%,_rgba(26,0,0,0.6)_100%)] pointer-events-none" />
-        
-        {/* Letterbox effect */}
-        <div className="absolute top-0 left-0 right-0 h-[6%] md:h-[8%] bg-dark z-10" />
-        <div className="absolute bottom-0 left-0 right-0 h-[6%] md:h-[8%] bg-dark z-10" />
-        
-        {/* Hero Content */}
-        <motion.div
-          style={{ y: textY, opacity: textOpacity }}
-          className="relative z-20 h-full flex flex-col items-center justify-center px-6"
-        >
-          <motion.div
-            style={{ scale: titleScale }}
-            className="text-center"
-          >
-            <motion.p
-              initial={{ opacity: 0, letterSpacing: '0.1em' }}
-              animate={{ opacity: 1, letterSpacing: '0.4em' }}
-              transition={{ duration: 1.5, delay: 0.5 }}
-              className="text-rose/70 text-[10px] md:text-xs uppercase mb-8 font-light"
-            >
-              Experiência Exclusiva
-            </motion.p>
-            
-            <h1 className="font-serif text-5xl md:text-7xl lg:text-[8rem] font-light text-cream leading-[0.85] mb-8">
-              <motion.span
-                initial={{ opacity: 0, y: 40 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 1, delay: 0.8 }}
-                className="block"
-              >
-                Momentos
-              </motion.span>
-              <motion.span
-                initial={{ opacity: 0, y: 40 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 1, delay: 1.1 }}
-                className="block italic text-crimson"
-              >
-                Únicos
-              </motion.span>
-            </h1>
-            
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 1, delay: 1.6 }}
-              className="text-cream/50 text-xs md:text-sm font-light max-w-sm mx-auto leading-relaxed tracking-wide"
-            >
-              Uma experiência sofisticada desenhada para quem aprecia o extraordinário
-            </motion.p>
-          </motion.div>
-          
-          {/* Scroll indicator */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 2.8, duration: 1 }}
-            className="absolute bottom-[10%] left-1/2 -translate-x-1/2 flex flex-col items-center gap-3"
-          >
-            <span className="text-cream/30 text-[9px] tracking-[0.4em] uppercase">Scroll</span>
-            <motion.div
-              animate={{ y: [0, 10, 0] }}
-              transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-              className="w-px h-10 bg-gradient-to-b from-crimson/80 to-transparent"
-            />
-          </motion.div>
-        </motion.div>
-        
-        {/* Side decorative lines */}
-        <motion.div
-          initial={{ height: 0 }}
-          animate={{ height: '30%' }}
-          transition={{ duration: 2, delay: 2 }}
-          className="absolute left-6 md:left-12 top-1/2 -translate-y-1/2 w-px bg-gradient-to-b from-transparent via-crimson/30 to-transparent hidden md:block"
-        />
-        <motion.div
-          initial={{ height: 0 }}
-          animate={{ height: '30%' }}
-          transition={{ duration: 2, delay: 2.2 }}
-          className="absolute right-6 md:right-12 top-1/2 -translate-y-1/2 w-px bg-gradient-to-b from-transparent via-crimson/30 to-transparent hidden md:block"
-        />
-      </div>
-    </section>
-  );
-}
 
-// ============================================
-// CINEMATIC TRANSITION - Photo reveal
-// ============================================
-function CinematicTransition() {
-  const sectionRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ["start end", "end start"]
-  });
-  
-  const imageScale = useTransform(scrollYProgress, [0, 0.3, 0.7, 1], [1.3, 1, 1, 0.9]);
-  const imageClip = useTransform(scrollYProgress, [0, 0.3, 0.7, 1], [
-    "inset(20% 0%)",
-    "inset(0% 0%)",
-    "inset(0% 0%)",
-    "inset(10% 0%)"
-  ]);
-  const textX = useTransform(scrollYProgress, [0.2, 0.5], [-100, 0]);
-  const textOpacity = useTransform(scrollYProgress, [0.2, 0.45], [0, 1]);
-  const lineScale = useTransform(scrollYProgress, [0.3, 0.6], [0, 1]);
-
-  return (
-    <section ref={sectionRef} className="relative h-[120vh] overflow-hidden">
-      <div className="sticky top-0 h-screen overflow-hidden">
-        {/* Background image with clip-path animation */}
+        {/* tratamento cinematográfico */}
         <motion.div
-          style={{ scale: imageScale, clipPath: imageClip }}
-          className="absolute inset-0"
+          style={{ opacity: vignette }}
+          className="absolute inset-0 bg-dark mix-blend-multiply"
+        />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_35%,_rgba(26,0,0,0.75)_100%)]" />
+
+        {/* barras letterbox que se abrem ao rolar */}
+        <motion.div
+          style={{ height: barOpen }}
+          className="absolute inset-x-0 top-0 z-20 bg-dark"
+        />
+        <motion.div
+          style={{ height: barOpen }}
+          className="absolute inset-x-0 bottom-0 z-20 bg-dark"
+        />
+
+        {/* tipografia lateral — camada lenta */}
+        <motion.div
+          style={{ y: layerSlow, opacity: contentOpacity }}
+          className="absolute left-6 top-1/2 z-30 hidden -translate-y-1/2 lg:block"
         >
-          <img
-            src="/02-fotofrente.jpg"
-            alt="Apresentação"
-            className="w-full h-full object-cover object-top"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-dark/95 via-dark/50 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-t from-dark via-transparent to-dark/60" />
+          <p className="vertical-text text-[10px] uppercase tracking-[0.6em] text-cream/30">
+            Acompanhante de luxo — Atendimento VIP
+          </p>
         </motion.div>
-        
-        {/* Content */}
-        <div className="relative z-10 h-full flex items-center px-6 md:px-16 lg:px-24">
-          <motion.div
-            style={{ x: textX, opacity: textOpacity }}
-            className="max-w-xl"
+        <motion.div
+          style={{ y: layerSlow, opacity: contentOpacity }}
+          className="absolute right-6 top-1/2 z-30 hidden -translate-y-1/2 lg:block"
+        >
+          <p className="vertical-text text-[10px] uppercase tracking-[0.6em] text-rose/40">
+            Experiências · Video Call · Packs
+          </p>
+        </motion.div>
+
+        {/* conteúdo central — camada rápida (parallax de velocidades) */}
+        <motion.div
+          style={{ y: layerFast, opacity: contentOpacity }}
+          className="relative z-30 flex h-full flex-col items-center justify-center px-6 text-center"
+        >
+          <motion.p
+            initial={{ opacity: 0, letterSpacing: '0.1em' }}
+            animate={{ opacity: 1, letterSpacing: '0.55em' }}
+            transition={{ duration: 2, delay: 1.9, ease: 'easeOut' }}
+            className="mb-9 text-[10px] font-light uppercase text-rose/80"
           >
+            Presença · Elegância · Discrição
+          </motion.p>
+
+          <h1 className="font-serif leading-[0.86] text-cream">
             <motion.span
-              className="text-crimson text-[10px] md:text-xs tracking-[0.4em] uppercase block mb-4"
+              initial={{ y: '110%' }}
+              animate={{ y: 0 }}
+              transition={{ duration: 1.2, delay: 2.1, ease: EASE }}
+              className="block overflow-hidden"
             >
-              Sobre
+              <span className="block text-[clamp(3.6rem,12vw,10.5rem)] font-light">
+                Momentos
+              </span>
             </motion.span>
-            <h2 className="font-serif text-4xl md:text-6xl lg:text-8xl font-light text-cream leading-[1.05] mb-8">
-              Presença que<br />
-              <span className="italic text-rose">marca</span>
-            </h2>
-            <motion.div
-              style={{ scaleX: lineScale }}
-              className="w-20 h-px bg-crimson mb-8 origin-left"
-            />
-            <p className="text-cream/60 text-sm md:text-base font-light leading-[1.9] max-w-md">
-              Elegância, sofisticação e uma energia magnética que transforma cada encontro em uma memória inesquecível.
-            </p>
-          </motion.div>
-        </div>
+            <motion.span
+              initial={{ y: '110%' }}
+              animate={{ y: 0 }}
+              transition={{ duration: 1.2, delay: 2.35, ease: EASE }}
+              className="block overflow-hidden"
+            >
+              <span className="block text-[clamp(3.6rem,12vw,10.5rem)] italic text-crimson">
+                inesquecíveis
+              </span>
+            </motion.span>
+          </h1>
+
+          <motion.p
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1.2, delay: 2.9, ease: EASE }}
+            className="mt-10 max-w-sm text-xs font-light leading-relaxed tracking-wide text-cream/55 md:text-sm"
+          >
+            Uma experiência desenhada para quem entende que os melhores momentos
+            acontecem longe dos holofotes.
+          </motion.p>
+        </motion.div>
+
+        {/* indicador de scroll */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 3.6, duration: 1 }}
+          style={{ opacity: contentOpacity }}
+          className="absolute bottom-[12%] left-1/2 z-30 flex -translate-x-1/2 flex-col items-center gap-3"
+        >
+          <span className="text-[9px] uppercase tracking-[0.5em] text-cream/35">
+            Role para viver
+          </span>
+          <motion.span
+            animate={{ y: [0, 12, 0], opacity: [0.2, 1, 0.2] }}
+            transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
+            className="block h-12 w-px bg-gradient-to-b from-crimson to-transparent"
+          />
+        </motion.div>
       </div>
     </section>
   );
 }
 
-// ============================================
-// ABOUT / PRESENTATION SECTION
-// ============================================
-function AboutSection() {
-  const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true, margin: "-100px" });
-  
+/* ------------------------------------------------------------
+   TRANSIÇÃO CINEMATOGRÁFICA — cortina sobe, revelando a marca
+------------------------------------------------------------ */
+function CurtainReveal() {
+  const ref = useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ['start end', 'end end'],
+  });
+  const curtain = useTransform(scrollYProgress, [0, 1], ['0%', '100%']);
+  const wordY = useTransform(scrollYProgress, [0.25, 1], ['100%', '-12%']);
+  const subOpacity = useTransform(scrollYProgress, [0.55, 0.95], [0, 1]);
+
   return (
-    <section ref={ref} id="experiencia" className="relative py-32 md:py-48 px-6 md:px-12 bg-dark">
-      {/* Background decoration */}
-      <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-burgundy/10 to-transparent pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-64 h-64 bg-crimson/5 rounded-full blur-[150px] pointer-events-none" />
-      
-      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center">
-        {/* Image */}
+    <section ref={ref} className="relative h-[130vh]">
+      <div className="sticky top-0 h-screen overflow-hidden bg-dark">
+        {/* destino: a palavra gigante emerge por trás da cortina */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="overflow-hidden">
+            <motion.h2
+              style={{ y: wordY }}
+              className="whitespace-nowrap font-serif text-[clamp(4.5rem,17vw,15rem)] font-light leading-none text-cream"
+            >
+              Marcante<span className="text-crimson">.</span>
+            </motion.h2>
+          </div>
+        </div>
+        <motion.p
+          style={{ opacity: subOpacity }}
+          className="absolute bottom-[16%] left-1/2 w-full -translate-x-1/2 px-6 text-center text-[10px] uppercase tracking-[0.5em] text-rose/60"
+        >
+          A primeira impressão permanece
+        </motion.p>
+
+        {/* cortina — vídeo scrubado subindo como uma porta */}
         <motion.div
-          initial={{ opacity: 0, x: -60 }}
+          style={{ top: curtain }}
+          className="absolute inset-x-0 bottom-0 h-full will-change-[top]"
+        >
+          <ScrollVideo />
+          <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(26,0,0,0.55),rgba(26,0,0,0)_38%)]" />
+          <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-crimson/70 to-transparent" />
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+/* ------------------------------------------------------------
+   SOBRE — apresentação editorial com moldura viva
+------------------------------------------------------------ */
+function AboutSection() {
+  const ref = useRef<HTMLElement>(null);
+  const isInView = useInView(ref, { once: true, margin: '-120px' });
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ['start end', 'end start'],
+  });
+  const imgY = useTransform(scrollYProgress, [0, 1], ['8%', '-8%']);
+
+  return (
+    <section
+      ref={ref}
+      id="experiencia"
+      className="relative overflow-hidden bg-dark py-28 md:py-44"
+    >
+      <div className="pointer-events-none absolute -right-32 top-0 h-full w-1/2 bg-[linear-gradient(to_left,rgba(62,4,4,0.5),transparent)]" />
+
+      <div className="mx-auto grid max-w-[1400px] grid-cols-1 items-center gap-16 px-6 md:px-12 lg:grid-cols-12 lg:gap-10">
+        {/* coluna fotográfica */}
+        <motion.div
+          initial={{ opacity: 0, x: -50 }}
           animate={isInView ? { opacity: 1, x: 0 } : {}}
-          transition={{ duration: 1.2, ease: [0.25, 0.46, 0.45, 0.94] }}
-          className="relative"
+          transition={{ duration: 1.2, ease: EASE }}
+          className="relative lg:col-span-5 lg:col-start-1"
         >
           <div className="relative aspect-[3/4] overflow-hidden">
-            <img
-              src="/03-fotofrente.jpg"
-              alt="Apresentação"
-              className="w-full h-full object-cover object-top"
+            <motion.img
+              style={{ y: imgY }}
+              src="/02-fotofrente.jpg"
+              alt="Retrato editorial da Vitória em clima sofisticado"
+              loading="lazy"
+              className="absolute inset-[-10%] h-[120%] w-full object-cover object-top"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-dark/50 via-transparent to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-dark/60 via-transparent to-transparent" />
           </div>
-          {/* Frame decoration */}
-          <div className="absolute -top-4 -left-4 w-20 h-20 border-t border-l border-crimson/30" />
-          <div className="absolute -bottom-4 -right-4 w-20 h-20 border-b border-r border-crimson/30" />
-          
-          {/* Floating label */}
+          {/* moldura deslocada */}
+          <div className="pointer-events-none absolute -bottom-5 -left-5 hidden h-40 w-40 border-b border-l border-crimson/50 sm:block" />
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 16 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ delay: 0.8, duration: 0.8 }}
-            className="absolute -bottom-6 -right-6 md:right-auto md:-left-6 glass-subtle px-6 py-3"
+            transition={{ delay: 0.9, duration: 0.8 }}
+            className="absolute -right-3 top-8 bg-crimson px-5 py-2 md:-right-8"
           >
-            <p className="text-cream/80 text-[10px] tracking-[0.3em] uppercase">Premium</p>
+            <span className="text-[9px] uppercase tracking-[0.4em] text-cream">
+              Atendimento VIP
+            </span>
           </motion.div>
         </motion.div>
-        
-        {/* Text */}
+
+        {/* coluna editorial */}
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 1, delay: 0.3 }}
-          className="space-y-8"
+          transition={{ duration: 1, delay: 0.25, ease: EASE }}
+          className="lg:col-span-6 lg:col-start-7"
         >
-          <div>
-            <span className="text-crimson text-[10px] tracking-[0.4em] uppercase">Quem sou</span>
-          </div>
-          <h2 className="font-serif text-4xl md:text-5xl lg:text-6xl font-light text-cream leading-[1.1]">
-            Uma experiência<br />
-            <span className="italic text-rose">além do comum</span>
+          <p className="mb-5 text-[10px] uppercase tracking-[0.45em] text-crimson">
+            A anfitriã
+          </p>
+          <h2 className="font-serif text-[clamp(2.6rem,6vw,5rem)] font-light leading-[1.02] text-cream">
+            Discrição é<br />
+            <span className="italic text-rose">a arte</span> do encontro
           </h2>
-          <div className="w-20 h-px bg-gradient-to-r from-crimson to-transparent" />
-          <p className="text-cream/60 font-light leading-[1.9] text-sm md:text-base">
-            Cada momento é pensado nos mínimos detalhes. Da primeira mensagem ao último olhar, 
-            tudo é conduzido com elegância, discrição e uma atenção exclusiva que só quem 
-            valoriza o extraordinário pode compreender.
+          <div className="my-9 h-px w-24 bg-gradient-to-r from-crimson to-transparent" />
+          <p className="max-w-lg text-sm font-light leading-[2] text-cream/60 md:text-base">
+            Cada encontro é tratado como uma produção exclusiva: preparação,
+            presença e atenção aos detalhes que transformam uma simples companhia
+            em uma memória permanente.
           </p>
-          <p className="text-cream/50 font-light leading-[1.9] text-sm md:text-base">
-            Minha presença é marcada pela sofisticação natural, conversas envolventes e uma 
-            energia que transforma qualquer ocasião em algo memorável.
+          <p className="mt-6 max-w-lg text-sm font-light leading-[2] text-cream/45 md:text-base">
+            Eventos, jantares, viagens ou conversas que merecem tempo — tudo
+            conduzido com elegância natural, sigilo absoluto e uma energia que só
+            quem valoriza o extraordinário reconhece.
           </p>
-          
-          {/* Details */}
-          <div className="grid grid-cols-3 gap-6 pt-8 border-t border-cream/10">
-            <div>
-              <p className="font-serif text-2xl md:text-3xl text-crimson">VIP</p>
-              <p className="text-cream/40 text-[10px] tracking-wider uppercase mt-1">Atendimento</p>
-            </div>
-            <div>
-              <p className="font-serif text-2xl md:text-3xl text-crimson">100%</p>
-              <p className="text-cream/40 text-[10px] tracking-wider uppercase mt-1">Discreta</p>
-            </div>
-            <div>
-              <p className="font-serif text-2xl md:text-3xl text-crimson">★</p>
-              <p className="text-cream/40 text-[10px] tracking-wider uppercase mt-1">Exclusiva</p>
-            </div>
-          </div>
+
+          <ul className="mt-12 grid grid-cols-2 gap-x-8 gap-y-4 border-t border-cream/10 pt-10 sm:grid-cols-3">
+            {['Discrição absoluta', 'Presença marcante', 'Atendimento personalizado'].map(
+              (t, i) => (
+                <motion.li
+                  key={t}
+                  initial={{ opacity: 0, y: 18 }}
+                  animate={isInView ? { opacity: 1, y: 0 } : {}}
+                  transition={{ delay: 0.7 + i * 0.15, duration: 0.7, ease: EASE }}
+                  className="text-[11px] uppercase tracking-[0.18em] text-cream/50"
+                >
+                  <span className="mr-2 text-crimson">—</span>
+                  {t}
+                </motion.li>
+              )
+            )}
+          </ul>
         </motion.div>
       </div>
     </section>
   );
 }
 
-// ============================================
-// SERVICES / EXPERIENCES SECTION
-// ============================================
+/* ------------------------------------------------------------
+   SERVIÇOS — lista editorial com reveal em máscara
+------------------------------------------------------------ */
+const SERVICES = [
+  {
+    n: '01',
+    title: 'Acompanhante',
+    tag: 'Eventos · Jantares · Viagens',
+    desc: 'Uma companhia sofisticada para ocasiões que pedem presença à altura — do tapete vermelho ao jantar reservado.',
+  },
+  {
+    n: '02',
+    title: 'Chamadas de vídeo',
+    tag: 'Conexão exclusiva',
+    desc: 'Encontros virtuais privados, com atenção integral e um ambiente construído inteiramente ao seu redor.',
+  },
+  {
+    n: '03',
+    title: 'Packs exclusivos',
+    tag: 'Conteúdo premium',
+    desc: 'Material produzido com direção artística própria — qualidade, exclusividade e sigilo em cada envio.',
+  },
+];
+
 function ServicesSection() {
-  const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true, margin: "-50px" });
-  
-  const services = [
-    {
-      title: "Acompanhante",
-      subtitle: "Presença Exclusiva",
-      description: "Eventos, jantares, viagens. Uma companhia sofisticada para momentos que merecem ser vividos com intensidade e elegância.",
-      number: "01"
-    },
-    {
-      title: "Video Call",
-      subtitle: "Conexão Virtual",
-      description: "Encontros virtuais exclusivos com atenção total e inteira. Uma experiência íntima e personalizada no conforto do seu espaço.",
-      number: "02"
-    },
-    {
-      title: "Conteúdo",
-      subtitle: "Packs Exclusivos",
-      description: "Material fotográfico premium produzido com direção artística. Conteúdo único para quem aprecia qualidade e exclusividade.",
-      number: "03"
-    }
-  ];
+  const ref = useRef<HTMLElement>(null);
+  const isInView = useInView(ref, { once: true, margin: '-80px' });
 
   return (
-    <section ref={ref} className="relative py-32 md:py-48 px-6 md:px-12 bg-gradient-dark overflow-hidden">
-      {/* Background decoration */}
-      <div className="absolute inset-0 opacity-[0.03]">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-crimson blur-[150px]" />
-        <div className="absolute bottom-1/4 right-1/4 w-64 h-64 rounded-full bg-rose blur-[100px]" />
-      </div>
-      
-      <div className="max-w-7xl mx-auto relative">
-        {/* Section header */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 1 }}
-          className="text-center mb-20 md:mb-32"
-        >
-          <span className="text-crimson text-[10px] tracking-[0.4em] uppercase block mb-4">Experiências</span>
-          <h2 className="font-serif text-4xl md:text-6xl lg:text-7xl font-light text-cream">
-            O que <span className="italic text-rose">ofereço</span>
-          </h2>
-        </motion.div>
-        
-        {/* Services list - editorial style */}
-        <div className="space-y-0">
-          {services.map((service, index) => (
-            <motion.div
-              key={service.title}
-              initial={{ opacity: 0, y: 40 }}
-              animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.8, delay: index * 0.15 }}
-              className="group relative border-t border-cream/10 last:border-b"
-            >
-              <div className="py-10 md:py-14 grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8 items-center cursor-default">
-                {/* Number */}
-                <div className="md:col-span-1">
-                  <span className="text-crimson/40 font-serif text-lg group-hover:text-crimson transition-colors duration-500">
-                    {service.number}
-                  </span>
-                </div>
-                
-                {/* Title */}
-                <div className="md:col-span-3">
-                  <h3 className="font-serif text-2xl md:text-3xl font-light text-cream group-hover:text-rose transition-colors duration-500">
-                    {service.title}
-                  </h3>
-                </div>
-                
-                {/* Subtitle */}
-                <div className="md:col-span-2">
-                  <p className="text-cream/40 text-xs tracking-[0.15em] uppercase">
-                    {service.subtitle}
-                  </p>
-                </div>
-                
-                {/* Description */}
-                <div className="md:col-span-5">
-                  <p className="text-cream/50 text-sm font-light leading-relaxed group-hover:text-cream/70 transition-colors duration-500">
-                    {service.description}
-                  </p>
-                </div>
-                
-                {/* Arrow */}
-                <div className="hidden md:flex md:col-span-1 justify-end">
-                  <motion.span
-                    className="text-cream/20 group-hover:text-crimson group-hover:translate-x-2 transition-all duration-500"
-                  >
-                    →
-                  </motion.span>
-                </div>
-              </div>
-              
-              {/* Hover background */}
-              <div className="absolute inset-0 bg-crimson/0 group-hover:bg-crimson/[0.02] transition-all duration-700 pointer-events-none" />
-            </motion.div>
-          ))}
-        </div>
-        
-        {/* CTA after services */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={isInView ? { opacity: 1 } : {}}
-          transition={{ delay: 1, duration: 0.8 }}
-          className="text-center mt-16"
-        >
+    <section
+      ref={ref}
+      id="servicos"
+      className="relative overflow-hidden bg-burgundy py-28 md:py-40"
+    >
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(191,0,2,0.18),transparent_60%)]" />
+
+      <div className="relative mx-auto max-w-[1400px] px-6 md:px-12">
+        <div className="mb-16 flex flex-col gap-6 md:mb-24 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="mb-4 text-[10px] uppercase tracking-[0.45em] text-rose">
+              O que ofereço
+            </p>
+            <h2 className="font-serif text-[clamp(2.6rem,6vw,5.5rem)] font-light leading-none text-cream">
+              Três formas de<br />
+              <span className="italic text-crimson-bright">viver o exclusivo</span>
+            </h2>
+          </div>
           <a
             href="#contato"
-            className="inline-block text-cream/50 text-xs tracking-[0.3em] uppercase hover:text-crimson transition-colors duration-500 border-b border-cream/10 hover:border-crimson/30 pb-1"
+            className="group hidden items-center gap-3 text-[11px] uppercase tracking-[0.25em] text-cream/60 transition-colors hover:text-cream md:flex"
           >
-            Solicitar informações →
+            Solicitar informações
+            <span className="transition-transform duration-500 group-hover:translate-x-2">→</span>
           </a>
-        </motion.div>
-      </div>
-    </section>
-  );
-}
+        </div>
 
-// ============================================
-// CINEMATIC MOMENT - Full screen with parallax
-// ============================================
-function CinematicMoment() {
-  const sectionRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ["start end", "end start"]
-  });
-  
-  const scale = useTransform(scrollYProgress, [0, 0.4, 0.6, 1], [0.85, 1, 1, 1.15]);
-  const opacity = useTransform(scrollYProgress, [0, 0.2, 0.8, 1], [0, 1, 1, 0]);
-  const textScale = useTransform(scrollYProgress, [0.2, 0.5], [0.7, 1]);
-  const textOpacity = useTransform(scrollYProgress, [0.2, 0.4], [0, 1]);
-  const rotate = useTransform(scrollYProgress, [0, 1], [-2, 2]);
-
-  return (
-    <section ref={sectionRef} className="relative h-[160vh]">
-      <div className="sticky top-0 h-screen overflow-hidden flex items-center justify-center">
-        <motion.div
-          style={{ scale, opacity, rotate }}
-          className="absolute inset-[-5%]"
-        >
-          <img
-            src="/02-fotofrente.jpg"
-            alt="Ambiente cinematográfico"
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-dark/50" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_30%,_rgba(26,0,0,0.7)_100%)]" />
-        </motion.div>
-        
-        <motion.div
-          style={{ scale: textScale, opacity: textOpacity }}
-          className="relative z-10 text-center px-6"
-        >
-          <p className="font-serif text-5xl md:text-7xl lg:text-[9rem] font-light text-cream leading-[0.9]">
-            Cada detalhe<br />
-            <span className="italic text-crimson">importa</span>
-          </p>
-          <motion.div
-            initial={{ width: 0 }}
-            whileInView={{ width: '80px' }}
-            viewport={{ once: true }}
-            transition={{ duration: 1.5, delay: 0.5 }}
-            className="h-px bg-crimson mx-auto mt-8"
-          />
-        </motion.div>
-      </div>
-    </section>
-  );
-}
-
-// ============================================
-// EDITORIAL GALLERY
-// ============================================
-function GallerySection() {
-  const ref = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ["start end", "end start"]
-  });
-  
-  const [selectedImage, setSelectedImage] = useState<number | null>(null);
-  
-  const galleryImages = [
-    { src: "/02-fotofrente.jpg", alt: "Galeria 1", span: "row-span-2" },
-    { src: "/03-fotofrente.jpg", alt: "Galeria 2", span: "row-span-1" },
-    { src: "/02-fotofrente.jpg", alt: "Galeria 3", span: "row-span-1" },
-    { src: "/03-fotofrente.jpg", alt: "Galeria 4", span: "row-span-2" },
-    { src: "/02-fotofrente.jpg", alt: "Galeria 5", span: "row-span-1" },
-    { src: "/03-fotofrente.jpg", alt: "Galeria 6", span: "row-span-1" },
-  ];
-  
-  const y1 = useTransform(scrollYProgress, [0, 1], [0, -80]);
-  const y2 = useTransform(scrollYProgress, [0, 1], [0, -40]);
-
-  // Keyboard navigation for lightbox
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (selectedImage === null) return;
-      if (e.key === 'Escape') setSelectedImage(null);
-      if (e.key === 'ArrowRight') setSelectedImage(prev => prev !== null ? (prev + 1) % galleryImages.length : null);
-      if (e.key === 'ArrowLeft') setSelectedImage(prev => prev !== null ? (prev - 1 + galleryImages.length) % galleryImages.length : null);
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedImage, galleryImages.length]);
-
-  return (
-    <section ref={ref} id="galeria" className="relative py-32 md:py-48 px-6 md:px-12 bg-dark overflow-hidden">
-      {/* Section header */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        transition={{ duration: 1 }}
-        className="text-center mb-20"
-      >
-        <span className="text-crimson text-[10px] tracking-[0.4em] uppercase block mb-4">Portfólio Visual</span>
-        <h2 className="font-serif text-4xl md:text-6xl lg:text-7xl font-light text-cream">
-          <span className="italic text-rose">Galeria</span>
-        </h2>
-      </motion.div>
-      
-      {/* Gallery Grid - Asymmetric editorial */}
-      <div className="max-w-6xl mx-auto">
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-3 auto-rows-[180px] md:auto-rows-[260px]">
-          {galleryImages.map((image, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-50px" }}
-              transition={{ duration: 0.8, delay: index * 0.1 }}
-              className={`${image.span} relative overflow-hidden cursor-pointer group`}
-              onClick={() => setSelectedImage(index)}
-            >
-              <motion.div
-                style={index % 2 === 0 ? { y: y1 } : { y: y2 }}
-                className="absolute inset-[-10%]"
-              >
-                <img
-                  src={image.src}
-                  alt={image.alt}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  loading="lazy"
-                />
-              </motion.div>
-              <div className="absolute inset-0 bg-dark/0 group-hover:bg-dark/20 transition-all duration-500" />
-              <div className="absolute inset-0 border border-transparent group-hover:border-crimson/20 transition-all duration-500" />
-              
-              {/* Hover overlay */}
-              <div className="absolute inset-0 flex items-end justify-end p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                <span className="text-cream/70 text-[10px] font-light tracking-wider">
-                  {String(index + 1).padStart(2, '0')}
-                </span>
-              </div>
-            </motion.div>
+        <div>
+          {SERVICES.map((s, i) => (
+            <ServiceRow key={s.n} service={s} inView={isInView} index={i} />
           ))}
         </div>
+
+        <a
+          href="#contato"
+          className="group mt-14 inline-flex items-center gap-3 text-[11px] uppercase tracking-[0.25em] text-cream/60 transition-colors hover:text-cream md:hidden"
+        >
+          Solicitar informações
+          <span className="transition-transform duration-500 group-hover:translate-x-2">→</span>
+        </a>
       </div>
-      
-      {/* Lightbox */}
+    </section>
+  );
+}
+
+function ServiceRow({
+  service,
+  inView,
+  index,
+}: {
+  service: (typeof SERVICES)[number];
+  inView: boolean;
+  index: number;
+}) {
+  return (
+    <motion.article
+      initial={{ opacity: 0 }}
+      animate={inView ? { opacity: 1 } : {}}
+      transition={{ delay: 0.2 + index * 0.18, duration: 0.9, ease: EASE }}
+      className="group relative border-t border-cream/10 last:border-b"
+    >
+      <div className="grid cursor-default grid-cols-1 items-baseline gap-4 py-9 md:grid-cols-12 md:gap-8 md:py-12">
+        <div className="md:col-span-1">
+          <span className="font-serif text-sm text-crimson-bright/50 transition-colors duration-500 group-hover:text-crimson-bright">
+            {service.n}
+          </span>
+        </div>
+        <div className="md:col-span-4">
+          <div className="overflow-hidden">
+            <h3
+              className={`font-serif text-3xl font-light text-cream transition-colors duration-500 group-hover:text-rose md:text-5xl ${
+                inView ? 'reveal-run' : ''
+              }`}
+              style={{ animationDelay: `${0.45 + index * 0.18}s` }}
+            >
+              {service.title}
+            </h3>
+          </div>
+        </div>
+        <div className="md:col-span-2">
+          <p className="text-[10px] uppercase tracking-[0.2em] text-rose/70">{service.tag}</p>
+        </div>
+        <div className="md:col-span-4">
+          <p className="max-w-md text-sm font-light leading-relaxed text-cream/50 transition-colors duration-500 group-hover:text-cream/75">
+            {service.desc}
+          </p>
+        </div>
+        <div className="hidden justify-end md:col-span-1 md:flex">
+          <span className="text-cream/20 transition-all duration-500 group-hover:translate-x-2 group-hover:text-crimson-bright">
+            →
+          </span>
+        </div>
+      </div>
+      <div className="pointer-events-none absolute inset-0 bg-crimson/[0.04] opacity-0 transition-opacity duration-700 group-hover:opacity-100" />
+    </motion.article>
+  );
+}
+
+/* ------------------------------------------------------------
+   MOMENTO DE IMPACTO — frase gigante sobre foto fixa
+------------------------------------------------------------ */
+function StatementSection() {
+  const ref = useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ['start end', 'end start'],
+  });
+  const scale = useTransform(scrollYProgress, [0, 1], [1.25, 1]);
+  const imgY = useTransform(scrollYProgress, [0, 1], ['-6%', '6%']);
+  const textX = useTransform(scrollYProgress, [0.15, 0.85], ['22%', '-22%']);
+  const lineW = useTransform(scrollYProgress, [0.3, 0.7], ['0%', '100%']);
+
+  return (
+    <section ref={ref} className="relative h-[190vh]">
+      <div className="sticky top-0 h-screen overflow-hidden">
+        <motion.div style={{ scale, y: imgY }} className="absolute inset-[-6%]">
+          <img
+            src="/03-fotofrente.jpg"
+            alt="Vitória em composição editorial de forte contraste cromático"
+            loading="lazy"
+            className="h-full w-full object-cover object-center"
+          />
+        </motion.div>
+        <div className="absolute inset-0 bg-dark/60" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_20%,rgba(26,0,0,0.85)_100%)]" />
+
+        <motion.div style={{ x: textX }} className="relative z-10 flex h-full items-center">
+          <div className="w-full px-6 text-center md:px-16">
+            <p className="font-serif text-[clamp(3rem,10.5vw,9.5rem)] font-light italic leading-[0.95] text-cream text-shadow-cinematic">
+              O luxo é<br />
+              <span className="not-italic text-crimson-bright">ser inesquecível</span>
+            </p>
+          </div>
+        </motion.div>
+
+        <motion.div
+          style={{ width: lineW }}
+          className="absolute bottom-[14%] left-1/2 z-10 h-px -translate-x-1/2 bg-gradient-to-r from-transparent via-rose/70 to-transparent"
+        />
+        <p className="absolute bottom-[8%] left-1/2 z-10 -translate-x-1/2 whitespace-nowrap text-[9px] uppercase tracking-[0.5em] text-cream/35">
+          Direção · Presença · Memória
+        </p>
+      </div>
+    </section>
+  );
+}
+
+/* ------------------------------------------------------------
+   GALERIA — scroll horizontal com parallax interno + lightbox
+------------------------------------------------------------ */
+const GALLERY = [
+  { src: '/02-fotofrente.jpg', alt: 'Composição editorial I', label: 'Ensaio · 01' },
+  { src: '/03-fotofrente.jpg', alt: 'Composição editorial II', label: 'Ensaio · 02' },
+  { src: '/02-fotofrente.jpg', alt: 'Composição editorial III', label: 'Bastidores · 03' },
+  { src: '/03-fotofrente.jpg', alt: 'Composição editorial IV', label: 'Bastidores · 04' },
+];
+
+function GallerySection() {
+  const ref = useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ['start start', 'end end'],
+  });
+  const x = useTransform(scrollYProgress, [0, 1], ['1%', '-72%']);
+  const introOpacity = useTransform(scrollYProgress, [0, 0.12], [1, 0]);
+  const railOpacity = useTransform(scrollYProgress, [0, 0.06, 1], [0.4, 1, 1]);
+
+  const [lightbox, setLightbox] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (lightbox === null) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setLightbox(null);
+      if (e.key === 'ArrowRight')
+        setLightbox((p) => (p === null ? p : (p + 1) % GALLERY.length));
+      if (e.key === 'ArrowLeft')
+        setLightbox((p) => (p === null ? p : (p - 1 + GALLERY.length) % GALLERY.length));
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [lightbox]);
+
+  return (
+    <>
+      <section
+        ref={ref}
+        id="galeria"
+        className="relative h-[320vh] bg-dark"
+        aria-label="Galeria editorial"
+      >
+        <div className="sticky top-0 flex h-screen flex-col overflow-hidden">
+          {/* cabeçalho fixo da seção */}
+          <div className="relative z-10 flex items-end justify-between px-6 pb-6 pt-24 md:px-12">
+            <motion.div style={{ opacity: introOpacity }}>
+              <p className="mb-3 text-[10px] uppercase tracking-[0.45em] text-crimson-bright">
+                Portfólio visual
+              </p>
+              <h2 className="font-serif text-5xl font-light text-cream md:text-7xl">
+                <span className="italic text-rose">Galeria</span>
+              </h2>
+            </motion.div>
+            <p className="hidden max-w-[220px] text-right text-[10px] uppercase leading-relaxed tracking-[0.2em] text-cream/35 md:block">
+              Continue rolando
+              <br />
+              para percorrer →
+            </p>
+          </div>
+
+          {/* trilho horizontal */}
+          <motion.div
+            style={{ x, opacity: railOpacity }}
+            className="flex flex-1 items-center gap-5 pl-6 will-change-transform md:gap-10 md:pl-[18vw]"
+          >
+            {GALLERY.map((g, i) => (
+              <GalleryCard
+                key={i}
+                gallery={g}
+                index={i}
+                progress={scrollYProgress}
+                onOpen={() => setLightbox(i)}
+              />
+            ))}
+            {/* cartão-final: convite */}
+            <div className="flex h-[62vh] w-[78vw] shrink-0 items-center justify-center pr-6 md:w-[34vw] md:pr-12">
+              <div className="text-center">
+                <p className="font-serif text-3xl font-light italic leading-snug text-cream/80 md:text-4xl">
+                  O melhor
+                  <br />
+                  fica privado.
+                </p>
+                <a
+                  href="#contato"
+                  className="mt-8 inline-block border-b border-crimson/60 pb-1 text-[10px] uppercase tracking-[0.3em] text-cream/60 transition-colors duration-500 hover:text-cream"
+                >
+                  Falar comigo →
+                </a>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* barra de progresso horizontal */}
+          <div className="relative z-10 mx-6 mb-10 h-px bg-cream/10 md:mx-12">
+            <motion.div
+              style={{ scaleX: scrollYProgress }}
+              className="h-full origin-left bg-gradient-to-r from-crimson to-rose"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* LIGHTBOX */}
       <AnimatePresence>
-        {selectedImage !== null && (
+        {lightbox !== null && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.4 }}
-            className="fixed inset-0 z-[1000] bg-dark/97 backdrop-blur-2xl flex items-center justify-center p-4 md:p-8"
-            onClick={() => setSelectedImage(null)}
+            className="fixed inset-0 z-[1000] flex items-center justify-center bg-dark/95 p-4 backdrop-blur-xl md:p-10"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Visualização ampliada da galeria"
+            onClick={() => setLightbox(null)}
           >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
-              className="relative max-w-5xl max-h-[85vh] w-full"
+            <motion.figure
+              key={lightbox}
+              initial={{ opacity: 0, scale: 0.94, y: 14 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96 }}
+              transition={{ duration: 0.5, ease: EASE }}
+              className="relative flex max-h-[82vh] w-full max-w-4xl flex-col items-center"
               onClick={(e) => e.stopPropagation()}
             >
               <img
-                src={galleryImages[selectedImage].src}
-                alt={galleryImages[selectedImage].alt}
-                className="w-full h-full object-contain"
+                src={GALLERY[lightbox].src}
+                alt={GALLERY[lightbox].alt}
+                className="max-h-[74vh] w-auto object-contain"
               />
-              
-              {/* Navigation arrows */}
+              <figcaption className="mt-5 flex w-full items-center justify-between text-[10px] uppercase tracking-[0.3em] text-cream/40">
+                <span>{GALLERY[lightbox].label}</span>
+                <span>
+                  {String(lightbox + 1).padStart(2, '0')} /{' '}
+                  {String(GALLERY.length).padStart(2, '0')}
+                </span>
+              </figcaption>
+
               <button
-                onClick={(e) => { e.stopPropagation(); setSelectedImage(selectedImage > 0 ? selectedImage - 1 : galleryImages.length - 1); }}
-                className="absolute left-2 md:left-6 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center border border-cream/20 text-cream/70 hover:border-crimson hover:text-crimson transition-all duration-300"
-                aria-label="Anterior"
+                onClick={() =>
+                  setLightbox((p) =>
+                    p === null ? p : (p - 1 + GALLERY.length) % GALLERY.length
+                  )
+                }
+                aria-label="Imagem anterior"
+                className="absolute -left-2 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center border border-cream/15 text-cream/70 transition-all duration-300 hover:border-crimson hover:text-crimson-bright md:-left-16"
               >
                 ←
               </button>
               <button
-                onClick={(e) => { e.stopPropagation(); setSelectedImage(selectedImage < galleryImages.length - 1 ? selectedImage + 1 : 0); }}
-                className="absolute right-2 md:right-6 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center border border-cream/20 text-cream/70 hover:border-crimson hover:text-crimson transition-all duration-300"
-                aria-label="Próxima"
+                onClick={() =>
+                  setLightbox((p) => (p === null ? p : (p + 1) % GALLERY.length))
+                }
+                aria-label="Próxima imagem"
+                className="absolute -right-2 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center border border-cream/15 text-cream/70 transition-all duration-300 hover:border-crimson hover:text-crimson-bright md:-right-16"
               >
                 →
               </button>
-              
-              {/* Close */}
               <button
-                onClick={() => setSelectedImage(null)}
-                className="absolute -top-8 md:-top-12 right-0 text-cream/50 hover:text-cream text-xs tracking-wider uppercase transition-colors"
-                aria-label="Fechar"
+                onClick={() => setLightbox(null)}
+                aria-label="Fechar visualização"
+                className="absolute -top-2 right-0 text-[10px] uppercase tracking-[0.25em] text-cream/45 transition-colors hover:text-cream md:-top-8"
               >
                 Fechar ✕
               </button>
-              
-              {/* Counter */}
-              <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-cream/40 text-[10px] tracking-[0.3em]">
-                {String(selectedImage + 1).padStart(2, '0')} / {String(galleryImages.length).padStart(2, '0')}
-              </div>
-            </motion.div>
+            </motion.figure>
           </motion.div>
         )}
       </AnimatePresence>
-    </section>
+    </>
   );
 }
 
-// ============================================
-// CONTACT / CTA SECTION
-// ============================================
-function ContactSection() {
-  const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true, margin: "-100px" });
+function GalleryCard({
+  gallery,
+  index,
+  progress,
+  onOpen,
+}: {
+  gallery: (typeof GALLERY)[number];
+  index: number;
+  progress: ReturnType<typeof useScroll>['scrollYProgress'];
+  onOpen: () => void;
+}) {
+  // parallax interno: a imagem desloca-se mais devagar que o cartão
+  const inner = useTransform(progress, [0, 1], ['10%', '-10%']);
+  const tall = index % 2 === 0;
+  const hostRef = useRef<HTMLButtonElement>(null);
+  const enter = useInView(hostRef, { once: true, margin: '0px 0px 0px -5%' });
 
   return (
-    <section ref={ref} id="contato" className="relative py-32 md:py-48 px-6 md:px-12 bg-dark overflow-hidden">
-      {/* Background glow */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-crimson/[0.04] blur-[200px]" />
+    <motion.button
+      ref={hostRef}
+      initial={{ opacity: 0, y: 60 }}
+      animate={enter ? { opacity: 1, y: 0 } : {}}
+      transition={{ duration: 1, delay: (index % 2) * 0.1, ease: EASE }}
+      onClick={onOpen}
+      data-cursor
+      aria-label={`Ampliar ${gallery.alt}`}
+      className={`group relative shrink-0 overflow-hidden text-left ${
+        tall ? 'h-[68vh] w-[78vw] md:w-[42vw]' : 'h-[52vh] w-[70vw] self-end md:w-[30vw]'
+      }`}
+    >
+      <motion.img
+        style={{ x: inner }}
+        src={gallery.src}
+        alt={gallery.alt}
+        loading="lazy"
+        className="absolute inset-[-8%] h-full w-[116%] object-cover object-top transition-transform duration-[1400ms] ease-out group-hover:scale-[1.04]"
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-dark/70 via-transparent to-transparent opacity-70 transition-opacity duration-700 group-hover:opacity-40" />
+      <div className="absolute inset-0 border border-cream/0 transition-colors duration-500 group-hover:border-rose/30" />
+      <div className="absolute bottom-0 left-0 right-0 flex items-end justify-between p-5">
+        <span className="translate-y-2 text-[9px] uppercase tracking-[0.35em] text-cream/70 opacity-0 transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100">
+          {gallery.label}
+        </span>
+        <span className="font-serif text-lg text-cream/50">
+          {String(index + 1).padStart(2, '0')}
+        </span>
       </div>
-      
-      <div className="max-w-4xl mx-auto relative text-center">
+    </motion.button>
+  );
+}
+
+/* ------------------------------------------------------------
+   CONTATO — agendamento (objetivo central da página)
+------------------------------------------------------------ */
+function ContactSection() {
+  const ref = useRef<HTMLElement>(null);
+  const isInView = useInView(ref, { once: true, margin: '-100px' });
+
+  return (
+    <section
+      ref={ref}
+      id="contato"
+      className="bg-gradient-contact relative overflow-hidden py-28 md:py-44"
+    >
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(191,0,2,0.12),transparent_65%)]" />
+
+      <div className="relative mx-auto max-w-3xl px-6 text-center">
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 1 }}
+          transition={{ duration: 1.1, ease: EASE }}
         >
-          <span className="text-crimson text-[10px] tracking-[0.4em] uppercase block mb-6">Contato</span>
-          <h2 className="font-serif text-4xl md:text-6xl lg:text-7xl font-light text-cream leading-[1.1] mb-8">
-            Vamos criar um<br />
-            <span className="italic text-rose">momento único?</span>
+          <p className="mb-6 text-[10px] uppercase tracking-[0.5em] text-rose">Agenda aberta</p>
+          <h2 className="font-serif text-[clamp(2.8rem,7vw,5.5rem)] font-light leading-[1.02] text-cream">
+            Reserve o seu<br />
+            <span className="italic text-crimson-bright">horário exclusivo</span>
           </h2>
-          <p className="text-cream/50 font-light text-sm md:text-base max-w-lg mx-auto leading-[1.9] mb-14">
-            Entre em contato para saber mais sobre disponibilidade e agendar sua experiência exclusiva. 
-            Discrição e elegância garantidas.
+          <p className="mx-auto mt-8 max-w-md text-sm font-light leading-[2] text-cream/55">
+            Atendimentos organizados por agenda prévia. Envie uma mensagem discreta
+            para verificar disponibilidade e combinar todos os detalhes.
           </p>
-          
-          {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
-            <motion.a
-              href="#contato"
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-              className="px-12 py-4 bg-crimson text-cream text-xs tracking-[0.2em] uppercase font-light hover:bg-crimson/90 transition-all duration-500 animate-pulse-glow"
+
+          <div className="mt-14 flex flex-col items-center justify-center gap-4 sm:flex-row">
+            {/* CTA WhatsApp — demonstrativo até receber número real */}
+            <button
+              type="button"
+              aria-label="Agendar por WhatsApp (demonstração — número ainda não informado)"
+              title="Demonstração visual — conectaremos ao seu número real"
+              className="btn-premium demo-cta flex w-full items-center justify-center gap-3 bg-crimson px-12 py-5 text-[11px] uppercase tracking-[0.28em] text-cream transition-all duration-500 hover:bg-[#d40003] sm:w-auto"
             >
-              Agendar Horário
-            </motion.a>
-            <motion.a
-              href="#galeria"
-              whileHover={{ scale: 1.03 }}
-              className="px-12 py-4 border border-cream/15 text-cream/80 text-xs tracking-[0.2em] uppercase font-light hover:border-crimson/40 hover:text-crimson transition-all duration-500"
-            >
-              Ver Galeria
-            </motion.a>
-          </div>
-          
-          {/* Divider */}
-          <div className="w-16 h-px bg-cream/10 mx-auto mb-12" />
-          
-          {/* Social Links */}
-          <div className="flex items-center justify-center gap-8 mb-10">
-            <a
-              href="#"
-              className="text-cream/30 hover:text-crimson transition-colors duration-300 group"
-              aria-label="Instagram"
-              title="Instagram — exemplo"
-            >
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/>
+              <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.214 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
               </svg>
-            </a>
+              Agendar horário
+            </button>
             <a
-              href="#"
-              className="text-cream/30 hover:text-crimson transition-colors duration-300"
-              aria-label="Twitter"
-              title="Twitter — exemplo"
+              href="#redes"
+              className="w-full border border-cream/15 px-12 py-5 text-[11px] uppercase tracking-[0.28em] text-cream/75 transition-all duration-500 hover:border-rose/50 hover:text-rose sm:w-auto"
             >
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-              </svg>
-            </a>
-            <a
-              href="#"
-              className="text-cream/30 hover:text-crimson transition-colors duration-300"
-              aria-label="Telegram"
-              title="Telegram — exemplo"
-            >
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.479.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
-              </svg>
+              Falar por mensagem
             </a>
           </div>
-          
-          {/* Platform links */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-10">
-            <a
-              href="#"
-              className="text-cream/30 hover:text-rose text-[10px] tracking-[0.25em] uppercase transition-colors duration-300 border-b border-cream/5 hover:border-rose/20 pb-1"
-              title="OnlyFans — exemplo"
-            >
-              OnlyFans — exemplo
-            </a>
-            <a
-              href="#"
-              className="text-cream/30 hover:text-rose text-[10px] tracking-[0.25em] uppercase transition-colors duration-300 border-b border-cream/5 hover:border-rose/20 pb-1"
-              title="Privacy — exemplo"
-            >
-              Privacy — exemplo
-            </a>
+          <p className="demo-note mt-4 text-[9px] uppercase tracking-[0.3em] text-cream/25">
+            Botão de demonstração — será conectado ao número oficial
+          </p>
+
+          <div id="redes" className="mx-auto mt-20 h-px w-16 bg-cream/10" />
+
+          {/* redes e plataformas — links reais entram aqui na entrega final */}
+          <div className="mt-12 flex flex-wrap items-center justify-center gap-x-10 gap-y-5">
+            {[
+              { name: 'Instagram', note: 'Adicionar perfil' },
+              { name: 'OnlyFans', note: 'Adicionar perfil' },
+              { name: 'Privacy', note: 'Adicionar perfil' },
+            ].map((p) => (
+              <a
+                key={p.name}
+                href="#redes"
+                title={`${p.name} — exemplo (link real será adicionado)`}
+                className="group flex flex-col items-center gap-1"
+              >
+                <span className="text-[11px] uppercase tracking-[0.3em] text-cream/45 transition-colors duration-300 group-hover:text-rose">
+                  {p.name}
+                </span>
+                <span className="h-px w-0 bg-rose transition-all duration-500 group-hover:w-full" />
+                <span className="text-[8px] uppercase tracking-[0.25em] text-cream/20">
+                  {p.note}
+                </span>
+              </a>
+            ))}
           </div>
         </motion.div>
       </div>
@@ -923,80 +1095,113 @@ function ContactSection() {
   );
 }
 
-// ============================================
-// FOOTER
-// ============================================
+/* ------------------------------------------------------------
+   FAIXA INFINITA — ritmo entre blocos
+------------------------------------------------------------ */
+function MarqueeStrip() {
+  const items = [
+    'Acompanhante de luxo',
+    'Chamadas de vídeo',
+    'Packs exclusivos',
+    'Atendimento VIP',
+  ];
+  const row = [...items, ...items];
+  return (
+    <div className="marquee overflow-hidden border-y border-cream/[0.07] bg-dark py-6" aria-hidden="true">
+      <div className="marquee-track flex w-max items-center gap-14">
+        {row.map((t, i) => (
+          <span key={i} className="flex items-center gap-14">
+            <span className="whitespace-nowrap font-serif text-2xl font-light italic text-cream/25 md:text-3xl">
+              {t}
+            </span>
+            <span className="text-crimson">✦</span>
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------
+   FOOTER
+------------------------------------------------------------ */
 function Footer() {
   return (
-    <footer className="relative py-12 px-6 border-t border-cream/5 bg-dark">
-      <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-        <p className="font-serif text-xl text-cream/30">
-          <span className="text-crimson/60">E</span>xclusiva
+    <footer className="border-t border-cream/[0.06] bg-dark px-6 py-12 md:px-12">
+      <div className="mx-auto flex max-w-[1400px] flex-col items-center justify-between gap-6 md:flex-row">
+        <p className="font-serif text-2xl text-cream/40">
+          <span className="italic text-crimson">V</span>itória
         </p>
-        <p className="text-cream/20 text-[10px] tracking-[0.2em]">
-          © {new Date().getFullYear()} — Todos os direitos reservados
+        <p className="text-[9px] uppercase tracking-[0.3em] text-cream/20">
+          © {new Date().getFullYear()} · Todos os direitos reservados · Conteúdo +18
         </p>
-        <p className="text-cream/15 text-[9px] tracking-[0.3em] uppercase">
-          Experiência Premium
+        <p className="text-[9px] uppercase tracking-[0.35em] text-rose/40">
+          Experiência premium
         </p>
       </div>
     </footer>
   );
 }
 
-// ============================================
-// MAIN APP
-// ============================================
+/* ------------------------------------------------------------
+   APP
+------------------------------------------------------------ */
 export default function App() {
   const [scrolled, setScrolled] = useState(false);
   const [loading, setLoading] = useState(true);
-  
+
   const handleScroll = useCallback(() => {
-    setScrolled(window.scrollY > 100);
+    setScrolled(window.scrollY > 80);
   }, []);
-  
+
   useEffect(() => {
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, [handleScroll]);
 
-  const handleLoadingComplete = useCallback(() => {
-    setLoading(false);
-  }, []);
+  useEffect(() => {
+    document.body.style.overflow = loading ? 'hidden' : '';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [loading]);
+
+  const handleLoadingComplete = useCallback(() => setLoading(false), []);
+
+  const { scrollYProgress } = useScroll();
+  const progressScale = useSpring(scrollYProgress, { stiffness: 120, damping: 28 });
 
   return (
-    <div className="relative bg-dark min-h-screen">
-      {/* Loading Screen */}
+    <div className="relative min-h-screen bg-dark">
       <AnimatePresence>
         {loading && <LoadingScreen onComplete={handleLoadingComplete} />}
       </AnimatePresence>
-      
-      {/* Noise overlay for cinematic feel */}
-      <div className="noise-overlay" />
-      
-      {/* Cursor glow - desktop */}
-      {!loading && <CursorGlow />}
-      
-      {/* Scroll progress */}
-      {!loading && <ScrollProgress />}
-      
-      {/* Navigation */}
-      {!loading && <Navigation scrolled={scrolled} />}
-      
-      {/* Main content */}
+
       {!loading && (
-        <main>
-          <HeroSection />
-          <CinematicTransition />
-          <AboutSection />
-          <ServicesSection />
-          <CinematicMoment />
-          <GallerySection />
-          <ContactSection />
-        </main>
+        <>
+          <div className="noise-overlay" aria-hidden="true" />
+          <CustomCursor />
+          <motion.div
+            style={{ scaleX: progressScale }}
+            className="scroll-progress origin-left"
+            aria-hidden="true"
+          />
+          <Navigation scrolled={scrolled} />
+
+          <main>
+            <HeroSection />
+            <CurtainReveal />
+            <AboutSection />
+            <ServicesSection />
+            <MarqueeStrip />
+            <StatementSection />
+            <GallerySection />
+            <ContactSection />
+          </main>
+
+          <Footer />
+        </>
       )}
-      
-      {!loading && <Footer />}
     </div>
   );
 }
