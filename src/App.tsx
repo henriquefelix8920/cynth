@@ -21,13 +21,6 @@ import {
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
-function slug(s: string) {
-  return s
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '');
-}
-
 /* ------------------------------------------------------------
    PREFERS REDUCED MOTION
 ------------------------------------------------------------ */
@@ -56,12 +49,21 @@ function ScrollVideo({ className }: { className?: string }) {
   // sonda: testa se /01-videofundo.mp4 existe neste deploy antes de renderizar <video>
   useEffect(() => {
     let cancelled = false;
+    const show = () => { if (!cancelled) setHasVideo(true); };
+    // HEAD é mais leve; alguns hosts não o suportam — nesse caso testamos com um GET parcial
     fetch('/01-videofundo.mp4', { method: 'HEAD' })
       .then((res) => {
-        if (!cancelled && res.ok) setHasVideo(true);
+        if (cancelled) return;
+        if (res.ok) show();
+        else fetch('/01-videofundo.mp4', { method: 'GET', headers: { Range: 'bytes=0-1' } })
+          .then((r2) => { if (r2.ok || r2.status === 206) show(); })
+          .catch(() => { /* sem vídeo — fallback permanece */ });
       })
       .catch(() => {
-        /* sem vídeo — fallback permanece */
+        if (cancelled) return;
+        fetch('/01-videofundo.mp4', { method: 'GET', headers: { Range: 'bytes=0-1' } })
+          .then((r2) => { if (r2.ok || r2.status === 206) show(); })
+          .catch(() => { /* sem vídeo — fallback permanece */ });
       });
     return () => {
       cancelled = true;
@@ -197,6 +199,7 @@ function WhatsAppFloat() {
 
       <motion.a
         href="#contato"
+        onClick={(e) => scrollToAnchor(e, '#contato')}
         aria-label="Falar por WhatsApp — abre a seção de contato"
         initial={{ scale: 0, rotate: -30, opacity: 0 }}
         animate={{ scale: 1, rotate: 0, opacity: 1 }}
@@ -244,7 +247,7 @@ function LoadingScreen({ onComplete }: { onComplete: () => void }) {
     const checkVideo = () => {
       const v = document.querySelector('video');
       if (v && v.readyState >= 2) videoReady = true;
-      if (performance.now() - probeStart > 3500) videoReady = true; // timeout de segurança
+      if (performance.now() - probeStart > 7000) videoReady = true; // timeout de seguranca
     };
     const probe = setInterval(checkVideo, 200);
 
@@ -387,7 +390,7 @@ function Navigation({ scrolled }: { scrolled: boolean }) {
         }`}
       >
         <div className="mx-auto flex max-w-[1400px] items-center justify-between px-6 md:px-12">
-          <a href="#topo" className="group flex items-baseline gap-2" aria-label="Início">
+          <a href="#topo" onClick={(e) => scrollToAnchor(e, '#topo')} className="group flex items-baseline gap-2" aria-label="Início">
             <span className="font-serif text-2xl font-light tracking-wide text-cream">
               <span className="italic text-crimson transition-colors duration-500 group-hover:text-rose">
                 V
@@ -402,11 +405,12 @@ function Navigation({ scrolled }: { scrolled: boolean }) {
           <div className="hidden items-center gap-9 md:flex">
             {NAV_ITEMS.map((item) => (
               <a
-                key={item}
-                href={`#${slug(item)}`}
+                key={item.label}
+                href={item.target}
+                onClick={(e) => scrollToAnchor(e, item.target)}
                 className="group relative py-1 text-[11px] font-light uppercase tracking-[0.22em] text-cream/60 transition-colors duration-300 hover:text-cream"
               >
-                {item}
+                {item.label}
                 <span className="absolute -bottom-0.5 left-0 h-px w-0 bg-crimson transition-all duration-500 group-hover:w-full" />
               </a>
             ))}
@@ -451,21 +455,24 @@ function Navigation({ scrolled }: { scrolled: boolean }) {
           >
             {NAV_ITEMS.map((item, i) => (
               <motion.a
-                key={item}
-                href={`#${slug(item)}`}
-                onClick={() => setOpen(false)}
+                key={item.label}
+                href={item.target}
+                onClick={(e) => {
+                  setOpen(false);
+                  scrollToAnchor(e, item.target);
+                }}
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.25 + i * 0.09, duration: 0.6, ease: EASE }}
                 className="font-serif text-5xl font-light text-cream/90"
               >
-                {item}
+                {item.label}
                 <span className="ml-3 align-super text-[10px] text-crimson">0{i + 1}</span>
               </motion.a>
             ))}
             <motion.a
               href="#contato"
-              onClick={() => setOpen(false)}
+              onClick={(e) => { setOpen(false); scrollToAnchor(e, "#contato"); }}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.7 }}
@@ -807,6 +814,7 @@ function ServicesSection() {
           </div>
           <a
             href="#contato"
+            onClick={(e) => scrollToAnchor(e, '#contato')}
             className="group hidden items-center gap-3 text-[11px] uppercase tracking-[0.25em] text-cream/60 transition-colors hover:text-cream md:flex"
           >
             Solicitar informações
@@ -822,6 +830,7 @@ function ServicesSection() {
 
         <a
           href="#contato"
+          onClick={(e) => scrollToAnchor(e, '#contato')}
           className="group mt-14 inline-flex items-center gap-3 text-[11px] uppercase tracking-[0.25em] text-cream/60 transition-colors hover:text-cream md:hidden"
         >
           Solicitar informações
@@ -1019,6 +1028,7 @@ function GallerySection() {
                 </p>
                 <a
                   href="#contato"
+                  onClick={(e) => scrollToAnchor(e, '#contato')}
                   className="mt-8 inline-block border-b border-crimson/60 pb-1 text-[10px] uppercase tracking-[0.3em] text-cream/60 transition-colors duration-500 hover:text-cream"
                 >
                   Falar comigo →
