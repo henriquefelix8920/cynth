@@ -2,53 +2,28 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { motion, useScroll, useTransform, useSpring, useInView, AnimatePresence } from 'framer-motion';
 
 // ============================================
-// LOADING SCREEN
+// LOADING SCREEN (sem contagem de porcentagem)
 // ============================================
 function LoadingScreen({ onComplete }: { onComplete: () => void }) {
-  const [progress, setProgress] = useState(0);
-  
   useEffect(() => {
-    const interval = setInterval(() => {
-      setProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setTimeout(onComplete, 500);
-          return 100;
-        }
-        return prev + 2;
-      });
-    }, 30);
-    return () => clearInterval(interval);
+    const timer = setTimeout(onComplete, 1200);
+    return () => clearTimeout(timer);
   }, [onComplete]);
 
   return (
     <motion.div
-      exit={{ opacity: 0, scale: 1.05 }}
-      transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
-      className="fixed inset-0 z-[10000] bg-dark flex flex-col items-center justify-center"
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.6 }}
+      className="fixed inset-0 z-[10000] bg-dark flex items-center justify-center"
     >
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
+      <motion.h1
+        initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
-        className="text-center"
+        className="font-serif text-4xl md:text-5xl font-light text-cream tracking-wider"
       >
-        <h1 className="font-serif text-4xl md:text-5xl font-light text-cream mb-8 tracking-wider">
-          <span className="text-crimson">E</span>xclusiva
-        </h1>
-        
-        {/* Progress bar */}
-        <div className="w-48 h-px bg-cream/10 mx-auto overflow-hidden">
-          <motion.div
-            className="h-full bg-gradient-to-r from-crimson to-rose"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-        
-        <p className="text-cream/30 text-[10px] tracking-[0.4em] uppercase mt-4">
-          Carregando experiência
-        </p>
-      </motion.div>
+        <span className="text-crimson">E</span>xclusiva
+      </motion.h1>
     </motion.div>
   );
 }
@@ -202,11 +177,12 @@ function HeroSection() {
   const videoOpacity = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
   const textY = useTransform(scrollYProgress, [0, 1], [0, 250]);
   const textOpacity = useTransform(scrollYProgress, [0, 0.4], [1, 0]);
-  const overlayOpacity = useTransform(scrollYProgress, [0, 0.5, 1], [0.3, 0.6, 0.95]);
+  // Overlay mais leve no início para o vídeo ficar visível
+  const overlayOpacity = useTransform(scrollYProgress, [0, 0.6, 1], [0.15, 0.45, 0.9]);
   const titleScale = useTransform(scrollYProgress, [0, 0.5], [1, 1.2]);
 
   return (
-    <section ref={heroRef} className="relative h-[250vh]">
+    <section ref={heroRef} className="relative h-[180vh]">
       <div className="sticky top-0 h-screen overflow-hidden">
         {/* Video Background */}
         <motion.div
@@ -219,38 +195,34 @@ function HeroSection() {
               muted
               loop
               playsInline
+              preload="auto"
               className="w-full h-full object-cover"
               onError={() => setVideoError(true)}
             >
-              <source src="/01-video.mp4" type="video/mp4" />
+              <source src="/01-videofundo.mp4" type="video/mp4" />
             </video>
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-burgundy via-dark to-burgundy">
-              {/* Animated gradient fallback */}
-              <div className="absolute inset-0 opacity-30">
-                <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_center,_rgba(191,0,2,0.3)_0%,_transparent_70%)]" />
-              </div>
+            <div className="relative w-full h-full bg-gradient-to-br from-burgundy via-dark to-burgundy overflow-hidden">
+              {/* Fallback animado elegante (enquanto o vídeo não é enviado) */}
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(191,0,2,0.25)_0%,_transparent_70%)]" />
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(255,102,134,0.12)_0%,_transparent_55%)]" />
             </div>
           )}
         </motion.div>
-        
-        {/* Overlay */}
+
+        {/* Overlay de legibilidade (suave — deixa o vídeo aparecer) */}
         <motion.div
           style={{ opacity: overlayOpacity }}
           className="absolute inset-0 bg-dark"
         />
-        
+
         {/* Vignette */}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_40%,_rgba(26,0,0,0.6)_100%)] pointer-events-none" />
-        
-        {/* Letterbox effect */}
-        <div className="absolute top-0 left-0 right-0 h-[6%] md:h-[8%] bg-dark z-10" />
-        <div className="absolute bottom-0 left-0 right-0 h-[6%] md:h-[8%] bg-dark z-10" />
-        
+
         {/* Hero Content */}
         <motion.div
           style={{ y: textY, opacity: textOpacity }}
-          className="relative z-20 h-full flex flex-col items-center justify-center px-6"
+          className="relative z-20 h-full flex flex-col items-center justify-center px-6 pb-16"
         >
           <motion.div
             style={{ scale: titleScale }}
@@ -265,7 +237,7 @@ function HeroSection() {
               Experiência Exclusiva
             </motion.p>
             
-            <h1 className="font-serif text-5xl md:text-7xl lg:text-[8rem] font-light text-cream leading-[0.85] mb-8">
+            <h1 className="font-serif text-5xl md:text-7xl lg:text-8xl font-light text-cream leading-[0.95] mb-8">
               <motion.span
                 initial={{ opacity: 0, y: 40 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -299,7 +271,7 @@ function HeroSection() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 2.8, duration: 1 }}
-            className="absolute bottom-[10%] left-1/2 -translate-x-1/2 flex flex-col items-center gap-3"
+            className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3"
           >
             <span className="text-cream/30 text-[9px] tracking-[0.4em] uppercase">Scroll</span>
             <motion.div
@@ -350,22 +322,23 @@ function CinematicTransition() {
   const lineScale = useTransform(scrollYProgress, [0.3, 0.6], [0, 1]);
 
   return (
-    <section ref={sectionRef} className="relative h-[120vh] overflow-hidden">
+    <section ref={sectionRef} className="relative h-[110vh] overflow-hidden">
       <div className="sticky top-0 h-screen overflow-hidden">
         {/* Background image with clip-path animation */}
         <motion.div
           style={{ scale: imageScale, clipPath: imageClip }}
-          className="absolute inset-0"
+          className="absolute inset-0 bg-burgundy/20"
         >
           <img
-            src="/02-fotofrente.jpg"
+            src="/02-modelofrente.jpg"
             alt="Apresentação"
+            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
             className="w-full h-full object-cover object-top"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-dark/95 via-dark/50 to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-t from-dark via-transparent to-dark/60" />
         </motion.div>
-        
+
         {/* Content */}
         <div className="relative z-10 h-full flex items-center px-6 md:px-16 lg:px-24">
           <motion.div
@@ -377,7 +350,7 @@ function CinematicTransition() {
             >
               Sobre
             </motion.span>
-            <h2 className="font-serif text-4xl md:text-6xl lg:text-8xl font-light text-cream leading-[1.05] mb-8">
+            <h2 className="font-serif text-4xl md:text-6xl lg:text-7xl font-light text-cream leading-[1.05] mb-8">
               Presença que<br />
               <span className="italic text-rose">marca</span>
             </h2>
@@ -403,23 +376,24 @@ function AboutSection() {
   const isInView = useInView(ref, { once: true, margin: "-100px" });
   
   return (
-    <section ref={ref} id="experiencia" className="relative py-32 md:py-48 px-6 md:px-12 bg-dark">
+    <section ref={ref} id="experiencia" className="relative py-20 md:py-32 px-6 md:px-12 bg-dark">
       {/* Background decoration */}
       <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-burgundy/10 to-transparent pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-64 h-64 bg-crimson/5 rounded-full blur-[150px] pointer-events-none" />
-      
-      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center">
+
+      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
         {/* Image */}
         <motion.div
           initial={{ opacity: 0, x: -60 }}
           animate={isInView ? { opacity: 1, x: 0 } : {}}
           transition={{ duration: 1.2, ease: [0.25, 0.46, 0.45, 0.94] }}
-          className="relative"
+          className="relative max-w-md mx-auto lg:mx-0 w-full"
         >
-          <div className="relative aspect-[3/4] overflow-hidden">
+          <div className="relative aspect-[3/4] overflow-hidden bg-burgundy/20">
             <img
-              src="/03-fotofrente.jpg"
+              src="/03-modelofrente.jpg"
               alt="Apresentação"
+              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
               className="w-full h-full object-cover object-top"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-dark/50 via-transparent to-transparent" />
@@ -427,13 +401,13 @@ function AboutSection() {
           {/* Frame decoration */}
           <div className="absolute -top-4 -left-4 w-20 h-20 border-t border-l border-crimson/30" />
           <div className="absolute -bottom-4 -right-4 w-20 h-20 border-b border-r border-crimson/30" />
-          
+
           {/* Floating label */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
             transition={{ delay: 0.8, duration: 0.8 }}
-            className="absolute -bottom-6 -right-6 md:right-auto md:-left-6 glass-subtle px-6 py-3"
+            className="absolute bottom-4 left-4 glass-subtle px-6 py-3"
           >
             <p className="text-cream/80 text-[10px] tracking-[0.3em] uppercase">Premium</p>
           </motion.div>
@@ -514,7 +488,7 @@ function ServicesSection() {
   ];
 
   return (
-    <section ref={ref} className="relative py-32 md:py-48 px-6 md:px-12 bg-gradient-dark overflow-hidden">
+    <section ref={ref} className="relative py-20 md:py-32 px-6 md:px-12 bg-gradient-dark overflow-hidden">
       {/* Background decoration */}
       <div className="absolute inset-0 opacity-[0.03]">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-crimson blur-[150px]" />
@@ -527,7 +501,7 @@ function ServicesSection() {
           initial={{ opacity: 0, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 1 }}
-          className="text-center mb-20 md:mb-32"
+          className="text-center mb-14 md:mb-20"
         >
           <span className="text-crimson text-[10px] tracking-[0.4em] uppercase block mb-4">Experiências</span>
           <h2 className="font-serif text-4xl md:text-6xl lg:text-7xl font-light text-cream">
@@ -626,15 +600,16 @@ function CinematicMoment() {
   const rotate = useTransform(scrollYProgress, [0, 1], [-2, 2]);
 
   return (
-    <section ref={sectionRef} className="relative h-[160vh]">
+    <section ref={sectionRef} className="relative h-[120vh]">
       <div className="sticky top-0 h-screen overflow-hidden flex items-center justify-center">
         <motion.div
           style={{ scale, opacity, rotate }}
-          className="absolute inset-[-5%]"
+          className="absolute inset-[-5%] bg-burgundy/20"
         >
           <img
-            src="/02-fotofrente.jpg"
+            src="/02-modelofrente.jpg"
             alt="Ambiente cinematográfico"
+            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-dark/50" />
@@ -645,7 +620,7 @@ function CinematicMoment() {
           style={{ scale: textScale, opacity: textOpacity }}
           className="relative z-10 text-center px-6"
         >
-          <p className="font-serif text-5xl md:text-7xl lg:text-[9rem] font-light text-cream leading-[0.9]">
+          <p className="font-serif text-5xl md:text-7xl lg:text-8xl font-light text-cream leading-[1.05]">
             Cada detalhe<br />
             <span className="italic text-crimson">importa</span>
           </p>
@@ -675,12 +650,12 @@ function GallerySection() {
   const [selectedImage, setSelectedImage] = useState<number | null>(null);
   
   const galleryImages = [
-    { src: "/02-fotofrente.jpg", alt: "Galeria 1", span: "row-span-2" },
-    { src: "/03-fotofrente.jpg", alt: "Galeria 2", span: "row-span-1" },
-    { src: "/02-fotofrente.jpg", alt: "Galeria 3", span: "row-span-1" },
-    { src: "/03-fotofrente.jpg", alt: "Galeria 4", span: "row-span-2" },
-    { src: "/02-fotofrente.jpg", alt: "Galeria 5", span: "row-span-1" },
-    { src: "/03-fotofrente.jpg", alt: "Galeria 6", span: "row-span-1" },
+    { src: "/02-modelofrente.jpg", alt: "Galeria 1", span: "row-span-2" },
+    { src: "/03-modelofrente.jpg", alt: "Galeria 2", span: "row-span-1" },
+    { src: "/02-modelofrente.jpg", alt: "Galeria 3", span: "row-span-1" },
+    { src: "/03-modelofrente.jpg", alt: "Galeria 4", span: "row-span-2" },
+    { src: "/02-modelofrente.jpg", alt: "Galeria 5", span: "row-span-1" },
+    { src: "/03-modelofrente.jpg", alt: "Galeria 6", span: "row-span-1" },
   ];
   
   const y1 = useTransform(scrollYProgress, [0, 1], [0, -80]);
@@ -699,14 +674,14 @@ function GallerySection() {
   }, [selectedImage, galleryImages.length]);
 
   return (
-    <section ref={ref} id="galeria" className="relative py-32 md:py-48 px-6 md:px-12 bg-dark overflow-hidden">
+    <section ref={ref} id="galeria" className="relative py-20 md:py-32 px-6 md:px-12 bg-dark overflow-hidden">
       {/* Section header */}
       <motion.div
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
         viewport={{ once: true }}
         transition={{ duration: 1 }}
-        className="text-center mb-20"
+        className="text-center mb-14"
       >
         <span className="text-crimson text-[10px] tracking-[0.4em] uppercase block mb-4">Portfólio Visual</span>
         <h2 className="font-serif text-4xl md:text-6xl lg:text-7xl font-light text-cream">
@@ -729,11 +704,12 @@ function GallerySection() {
             >
               <motion.div
                 style={index % 2 === 0 ? { y: y1 } : { y: y2 }}
-                className="absolute inset-[-10%]"
+                className="absolute inset-[-10%] bg-burgundy/20"
               >
                 <img
                   src={image.src}
                   alt={image.alt}
+                  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                   loading="lazy"
                 />
@@ -822,7 +798,7 @@ function ContactSection() {
   const isInView = useInView(ref, { once: true, margin: "-100px" });
 
   return (
-    <section ref={ref} id="contato" className="relative py-32 md:py-48 px-6 md:px-12 bg-dark overflow-hidden">
+    <section ref={ref} id="contato" className="relative py-20 md:py-32 px-6 md:px-12 bg-dark overflow-hidden">
       {/* Background glow */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-crimson/[0.04] blur-[200px]" />
@@ -835,17 +811,17 @@ function ContactSection() {
           transition={{ duration: 1 }}
         >
           <span className="text-crimson text-[10px] tracking-[0.4em] uppercase block mb-6">Contato</span>
-          <h2 className="font-serif text-4xl md:text-6xl lg:text-7xl font-light text-cream leading-[1.1] mb-8">
+          <h2 className="font-serif text-4xl md:text-6xl font-light text-cream leading-[1.1] mb-8">
             Vamos criar um<br />
             <span className="italic text-rose">momento único?</span>
           </h2>
-          <p className="text-cream/50 font-light text-sm md:text-base max-w-lg mx-auto leading-[1.9] mb-14">
+          <p className="text-cream/50 font-light text-sm md:text-base max-w-lg mx-auto leading-[1.9] mb-12">
             Entre em contato para saber mais sobre disponibilidade e agendar sua experiência exclusiva. 
             Discrição e elegância garantidas.
           </p>
           
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
             <motion.a
               href="#contato"
               whileHover={{ scale: 1.03 }}
@@ -966,37 +942,33 @@ export default function App() {
 
   return (
     <div className="relative bg-dark min-h-screen">
-      {/* Loading Screen */}
-      <AnimatePresence>
-        {loading && <LoadingScreen onComplete={handleLoadingComplete} />}
-      </AnimatePresence>
-      
+      {/* Loading Screen (apenas sobreposto — o conteúdo já renderiza por baixo) */}
+      <AnimatePresence>{loading && <LoadingScreen onComplete={handleLoadingComplete} />}</AnimatePresence>
+
       {/* Noise overlay for cinematic feel */}
       <div className="noise-overlay" />
-      
+
       {/* Cursor glow - desktop */}
-      {!loading && <CursorGlow />}
-      
+      <CursorGlow />
+
       {/* Scroll progress */}
-      {!loading && <ScrollProgress />}
-      
+      <ScrollProgress />
+
       {/* Navigation */}
-      {!loading && <Navigation scrolled={scrolled} />}
-      
+      <Navigation scrolled={scrolled} />
+
       {/* Main content */}
-      {!loading && (
-        <main>
-          <HeroSection />
-          <CinematicTransition />
-          <AboutSection />
-          <ServicesSection />
-          <CinematicMoment />
-          <GallerySection />
-          <ContactSection />
-        </main>
-      )}
-      
-      {!loading && <Footer />}
+      <main>
+        <HeroSection />
+        <CinematicTransition />
+        <AboutSection />
+        <ServicesSection />
+        <CinematicMoment />
+        <GallerySection />
+        <ContactSection />
+      </main>
+
+      <Footer />
     </div>
   );
 }
