@@ -45,9 +45,9 @@
       Clique em <strong>"Baixar Tudo (ZIP)"</strong> para baixar todos os arquivos de uma vez.<br>
       Depois é só extrair e subir para o GitHub.<br><br>
       <strong>⚠️ Importante:</strong> Você precisa adicionar manualmente na pasta <code>public/</code>:<br>
-      • <code>01-video.mp4</code> — seu vídeo<br>
-      • <code>02-fotofrente.jpg</code> — foto 1<br>
-      • <code>03-fotofrente.jpg</code> — foto 2
+      • <code>01-videofundo.mp4</code> — seu vídeo<br>
+      • <code>02-modelofrente.jpg</code> — foto 1<br>
+      • <code>03-modelofrente.jpg</code> — foto 2
     </p>
   </div>
 
@@ -66,9 +66,9 @@
 
   <div class="sec">Você Adiciona (Mídia)</div>
   <div class="fl">
-    <div class="fi"><div><div class="fn">🎬 01-video.mp4</div><div class="fp">public/ — SEU VÍDEO</div></div></div>
-    <div class="fi"><div><div class="fn">📷 02-fotofrente.jpg</div><div class="fp">public/ — SUA FOTO 1</div></div></div>
-    <div class="fi"><div><div class="fn">📷 03-fotofrente.jpg</div><div class="fp">public/ — SUA FOTO 2</div></div></div>
+    <div class="fi"><div><div class="fn">🎬 01-videofundo.mp4</div><div class="fp">public/ — SEU VÍDEO</div></div></div>
+    <div class="fi"><div><div class="fn">📷 02-modelofrente.jpg</div><div class="fp">public/ — SUA FOTO 1</div></div></div>
+    <div class="fi"><div><div class="fn">📷 03-modelofrente.jpg</div><div class="fp">public/ — SUA FOTO 2</div></div></div>
   </div>
 
   <div class="warn">
@@ -170,7 +170,7 @@ async function downloadAll() {
   for (const [p, c] of Object.entries(F)) {
     if (c) z.file(p, c);
   }
-  z.file('public/LEIA_ME.txt', 'COLOQUE SEUS ARQUIVOS DE MÍDIA AQUI\n\n• 01-video.mp4 — Seu vídeo\n• 02-fotofrente.jpg — Foto 1\n• 03-fotofrente.jpg — Foto 2\n\nOs nomes devem ser EXATAMENTE esses.');
+  z.file('public/LEIA_ME.txt', 'COLOQUE SEUS ARQUIVOS DE MÍDIA AQUI\n\n• 01-videofundo.mp4 — Seu vídeo\n• 02-modelofrente.jpg — Foto 1\n• 03-modelofrente.jpg — Foto 2\n\nOs nomes devem ser EXATAMENTE esses.');
   const b = await z.generateAsync({type:'blob'});
   const u = URL.createObjectURL(b);
   const a = document.createElement('a');

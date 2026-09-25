@@ -199,7 +199,7 @@ function HeroSection() {
               className="w-full h-full object-cover"
               onError={() => setVideoError(true)}
             >
-              <source src="/01-video.mp4" type="video/mp4" />
+              <source src="/01-videofundo.mp4" type="video/mp4" />
             </video>
           ) : (
             <div className="relative w-full h-full bg-gradient-to-br from-burgundy via-dark to-burgundy overflow-hidden">
@@ -330,7 +330,7 @@ function CinematicTransition() {
           className="absolute inset-0 bg-burgundy/20"
         >
           <img
-            src="/02-fotofrente.jpg"
+            src="/02-modelofrente.jpg"
             alt="Apresentação"
             onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
             className="w-full h-full object-cover object-top"
@@ -391,7 +391,7 @@ function AboutSection() {
         >
           <div className="relative aspect-[3/4] overflow-hidden bg-burgundy/20">
             <img
-              src="/03-fotofrente.jpg"
+              src="/03-modelofrente.jpg"
               alt="Apresentação"
               onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
               className="w-full h-full object-cover object-top"
@@ -607,7 +607,7 @@ function CinematicMoment() {
           className="absolute inset-[-5%] bg-burgundy/20"
         >
           <img
-            src="/02-fotofrente.jpg"
+            src="/02-modelofrente.jpg"
             alt="Ambiente cinematográfico"
             onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
             className="w-full h-full object-cover"
@@ -650,12 +650,12 @@ function GallerySection() {
   const [selectedImage, setSelectedImage] = useState<number | null>(null);
   
   const galleryImages = [
-    { src: "/02-fotofrente.jpg", alt: "Galeria 1", span: "row-span-2" },
-    { src: "/03-fotofrente.jpg", alt: "Galeria 2", span: "row-span-1" },
-    { src: "/02-fotofrente.jpg", alt: "Galeria 3", span: "row-span-1" },
-    { src: "/03-fotofrente.jpg", alt: "Galeria 4", span: "row-span-2" },
-    { src: "/02-fotofrente.jpg", alt: "Galeria 5", span: "row-span-1" },
-    { src: "/03-fotofrente.jpg", alt: "Galeria 6", span: "row-span-1" },
+    { src: "/02-modelofrente.jpg", alt: "Galeria 1", span: "row-span-2" },
+    { src: "/03-modelofrente.jpg", alt: "Galeria 2", span: "row-span-1" },
+    { src: "/02-modelofrente.jpg", alt: "Galeria 3", span: "row-span-1" },
+    { src: "/03-modelofrente.jpg", alt: "Galeria 4", span: "row-span-2" },
+    { src: "/02-modelofrente.jpg", alt: "Galeria 5", span: "row-span-1" },
+    { src: "/03-modelofrente.jpg", alt: "Galeria 6", span: "row-span-1" },
   ];
   
   const y1 = useTransform(scrollYProgress, [0, 1], [0, -80]);
