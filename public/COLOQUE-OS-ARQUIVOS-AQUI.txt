@@ -1,0 +1,9 @@
+ARQUIVOS DE MÍDIA — JÁ ADICIONADOS ✔
+
+Os arquivos abaixo estão na pasta /public com estes nomes:
+  01-videofundo.mp4    (vídeo do hero, controlado pelo scroll)
+  02-modelofrente.jpg  (foto 1 — seção Sobre + galeria)
+  03-modelofrente.jpg  (foto 2 — momento de impacto + galeria)
+
+Para substituir por novas mídias no futuro: envie arquivos com os MESMOS nomes.
+Se usar nomes diferentes, avise para atualizar o código.
