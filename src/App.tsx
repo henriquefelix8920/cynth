@@ -72,6 +72,20 @@ function ScrollVideo({ className }: { className?: string }) {
       }
     };
 
+    // alguns navegadores só reportam duração após um seek mínimo
+    const onTimeUpdate = () => {
+      if (duration === 0) onMeta();
+    };
+    const forceProbe = () => {
+      try {
+        if (!isFinite(v.duration) || v.duration === 0) {
+          v.currentTime = 0.1;
+        }
+      } catch {
+        /* noop */
+      }
+    };
+
     const onScroll = () => {
       if (ticking || duration === 0) return;
       ticking = true;
@@ -86,12 +100,17 @@ function ScrollVideo({ className }: { className?: string }) {
 
     onMeta();
     v.addEventListener('loadedmetadata', onMeta);
+    v.addEventListener('timeupdate', onTimeUpdate);
+    // fallback: se em 1,5s a duração ainda for inválida, força um seek de sonda
+    const probeTimer = window.setTimeout(forceProbe, 1500);
     if (!reduced) {
       window.addEventListener('scroll', onScroll, { passive: true });
       onScroll();
     }
     return () => {
       v.removeEventListener('loadedmetadata', onMeta);
+      v.removeEventListener('timeupdate', onTimeUpdate);
+      window.clearTimeout(probeTimer);
       window.removeEventListener('scroll', onScroll);
     };
   }, [hasVideo, reduced]);
