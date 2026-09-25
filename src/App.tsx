@@ -51,7 +51,22 @@ function usePrefersReducedMotion() {
 ------------------------------------------------------------ */
 function ScrollVideo({ className }: { className?: string }) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [hasVideo, setHasVideo] = useState(true);
+  const [hasVideo, setHasVideo] = useState(false); // só mostra o vídeo quando ele realmente carregar (evita tela preta)
+
+  // sonda: testa se /01-videofundo.mp4 existe neste deploy antes de renderizar <video>
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/01-videofundo.mp4', { method: 'HEAD' })
+      .then((res) => {
+        if (!cancelled && res.ok) setHasVideo(true);
+      })
+      .catch(() => {
+        /* sem vídeo — fallback permanece */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   const reduced = usePrefersReducedMotion();
 
   useEffect(() => {
@@ -128,7 +143,14 @@ function ScrollVideo({ className }: { className?: string }) {
           className="relative h-full w-full object-cover"
           muted
           playsInline
+          autoPlay
+          loop
           preload="auto"
+          onCanPlay={() => {
+            // reforço mobile: garante o estado pausado para o scrub assumir
+            const v = videoRef.current;
+            if (v) { v.pause(); v.currentTime = 0; }
+          }}
           onError={() => setHasVideo(false)}
           tabIndex={-1}
         >
@@ -140,23 +162,117 @@ function ScrollVideo({ className }: { className?: string }) {
 }
 
 /* ------------------------------------------------------------
+   BOTÃO FLUTUANTE WHATSAPP — 3D, animado, na paleta da marca
+------------------------------------------------------------ */
+function WhatsAppFloat() {
+  const [showTip, setShowTip] = useState(false);
+
+  useEffect(() => {
+    const t1 = window.setTimeout(() => setShowTip(true), 4500);
+    const t2 = window.setTimeout(() => setShowTip(false), 11000);
+    return () => {
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+    };
+  }, []);
+
+  return (
+    <div className="fixed bottom-5 right-5 z-[9000] flex items-end gap-3 sm:bottom-7 sm:right-7">
+      <AnimatePresence>
+        {showTip && (
+          <motion.div
+            initial={{ opacity: 0, x: 16 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 16 }}
+            transition={{ duration: 0.5, ease: EASE }}
+            className="hidden max-w-[220px] rounded-sm border border-crimson/40 bg-burgundy px-4 py-3 text-[11px] font-light uppercase tracking-[0.18em] text-cream shadow-[0_10px_40px_rgba(26,0,0,0.6)] sm:block"
+          >
+            Prefere conversar agora?
+            <span className="mt-1 block normal-case tracking-normal text-rose/70">
+              Toque aqui para falar comigo ↓
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <motion.a
+        href="#contato"
+        aria-label="Falar por WhatsApp — abre a seção de contato"
+        initial={{ scale: 0, rotate: -30, opacity: 0 }}
+        animate={{ scale: 1, rotate: 0, opacity: 1 }}
+        transition={{ delay: 0.9, type: 'spring', stiffness: 260, damping: 18 }}
+        whileHover={{ scale: 1.1, y: -3 }}
+        whileTap={{ scale: 0.92 }}
+        onHoverStart={() => setShowTip(false)}
+        className="wa-float relative grid h-14 w-14 place-items-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-rose sm:h-16 sm:w-16"
+      >
+        {/* halo pulsante */}
+        <span className="wa-halo absolute inset-0 rounded-full" aria-hidden="true" />
+        {/* corpo 3D */}
+        <span
+          className="absolute inset-0 rounded-full bg-gradient-to-b from-[#FF6686] via-[#BF0002] to-[#3E0404]"
+          aria-hidden="true"
+        />
+        <span
+          className="pointer-events-none absolute inset-0 rounded-full"
+          style={{ boxShadow: 'inset 0 2px 6px rgba(255,255,255,0.45), inset 0 -7px 14px rgba(26,0,0,0.6)' }}
+          aria-hidden="true"
+        />
+        <svg viewBox="0 0 24 24" className="relative h-7 w-7 fill-[#FFF3F4] drop-shadow-[0_2px_3px_rgba(26,0,0,0.55)] sm:h-8 sm:w-8" aria-hidden="true">
+          <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38a9.87 9.87 0 0 0 4.74 1.21h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2Zm0 18.15h-.01a8.2 8.2 0 0 1-4.18-1.15l-.3-.18-3.11.82.83-3.04-.2-.31a8.2 8.2 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24 2.2 0 4.27.86 5.82 2.42a8.18 8.18 0 0 1 2.41 5.83c0 4.54-3.7 8.23-8.24 8.23Zm4.52-6.16c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.12-.17.25-.64.81-.78.97-.14.17-.29.19-.54.06-.25-.12-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.02-.38.11-.51.11-.11.25-.29.37-.43s.17-.25.25-.41c.08-.17.04-.31-.02-.43s-.56-1.34-.76-1.84c-.2-.48-.41-.42-.56-.43h-.48c-.17 0-.43.06-.66.31-.22.25-.86.85-.86 2.07 0 1.22.89 2.4 1.01 2.56.12.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.48-.07 1.47-.6 1.67-1.18.21-.58.21-1.07.14-1.18s-.22-.16-.47-.28Z" />
+        </svg>
+      </motion.a>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------
    LOADING — contagem cinematográfica
 ------------------------------------------------------------ */
 function LoadingScreen({ onComplete }: { onComplete: () => void }) {
   const [count, setCount] = useState(0);
 
   useEffect(() => {
-    const start = performance.now();
     let raf = 0;
+    const start = performance.now();
+    const minDur = 1700;
+    let videoReady = false;
+    let timerDone = false;
+
+    // aguarda o vídeo estar pronto (máx. 3,5s) para não revelar um hero preto
+    const probeStart = performance.now();
+    const checkVideo = () => {
+      const v = document.querySelector('video');
+      if (v && v.readyState >= 2) videoReady = true;
+      if (performance.now() - probeStart > 3500) videoReady = true; // timeout de segurança
+    };
+    const probe = setInterval(checkVideo, 200);
+
+    const finish = () => {
+      clearInterval(probe);
+      onComplete();
+    };
+    const watch = () => {
+      if (videoReady && timerDone) finish();
+      else raf = requestAnimationFrame(watch);
+    };
+
     const tick = (t: number) => {
-      const p = Math.min((t - start) / 1700, 1);
+      const p = Math.min((t - start) / minDur, 1);
       const eased = 1 - Math.pow(1 - p, 3);
       setCount(Math.round(eased * 100));
-      if (p < 1) raf = requestAnimationFrame(tick);
-      else setTimeout(onComplete, 450);
+      if (p < 1) {
+        raf = requestAnimationFrame(tick);
+      } else {
+        timerDone = true;
+        raf = requestAnimationFrame(watch);
+      }
     };
     raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
+    return () => {
+      cancelAnimationFrame(raf);
+      clearInterval(probe);
+    };
   }, [onComplete]);
 
   return (
@@ -238,7 +354,22 @@ function CustomCursor() {
 /* ------------------------------------------------------------
    NAVEGAÇÃO — muda de aparência conforme o scroll
 ------------------------------------------------------------ */
-const NAV_ITEMS = ['Experiência', 'Serviços', 'Galeria', 'Contato'];
+const NAV_ITEMS = [
+  { label: 'Experiência', target: '#experiencia' },
+  { label: 'Serviços', target: '#servicos' },
+  { label: 'Galeria', target: '#galeria' },
+  { label: 'Contato', target: '#contato' },
+];
+
+// âncoras com compensação da altura do header fixo (evita texto sobreposto ao navegar)
+function scrollToAnchor(e: React.MouseEvent<HTMLAnchorElement>, selector: string) {
+  e.preventDefault();
+  const el = document.querySelector(selector);
+  if (!el) return;
+  const y = el.getBoundingClientRect().top + window.scrollY - 64;
+  window.scrollTo({ top: y, behavior: 'smooth' });
+  history.replaceState(null, '', selector);
+}
 
 function Navigation({ scrolled }: { scrolled: boolean }) {
   const [open, setOpen] = useState(false);
@@ -1206,6 +1337,7 @@ export default function App() {
             aria-hidden="true"
           />
           <Navigation scrolled={scrolled} />
+          <WhatsAppFloat />
 
           <main>
             <HeroSection />
