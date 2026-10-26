@@ -3,37 +3,222 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vitória — Acompanhante de Luxo | Experiências Exclusivas</title>
-    <meta name="description" content="Presença, elegância e discrição. Acompanhamento para eventos, jantares e viagens, chamadas de vídeo exclusivas e packs de conteúdo premium. Agenda por horário marcado." />
-    <meta name="robots" content="index, follow" />
-    <meta name="theme-color" content="#1A0000" />
-    <meta property="og:title" content="Vitória — Acompanhante de Luxo" />
-    <meta property="og:description" content="Uma experiência cinematográfica. Agende seu horário exclusivo." />
+    <meta name="theme-color" content="#211b26" />
+    <meta name="description" content="Demonstração fictícia de uma jornada de emagrecimento com avaliação, clareza e acompanhamento médico responsável." />
     <meta property="og:type" content="website" />
+    <meta property="og:title" content="Dra. Vitória — O cuidado começa antes da balança" />
+    <meta property="og:description" content="Uma demonstração fictícia de acompanhamento médico para emagrecimento, com informação clara e decisões individualizadas." />
+    <meta property="og:site_name" content="Dra. Vitória" />
+    <meta name="twitter:card" content="summary" />
+    <link rel="canonical" href="/" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/src/styles.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500&family=Inter:wght@200;300;400;500;600&display=swap" rel="stylesheet" />
-    <style>
-      html, body {
-        margin: 0;
-        padding: 0;
-        width: 100%;
-        min-height: 100%;
-        background-color: #1A0000;
-        color: #ffffff;
-        overflow-x: hidden;
-      }
-      @media (prefers-reduced-motion: reduce) {
-        *, *::before, *::after {
-          animation-duration: 0.01ms !important;
-          animation-iteration-count: 1 !important;
-          transition-duration: 0.01ms !important;
-        }
-      }
-    </style>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet" />
+    <title>Dra. Vitória — O cuidado começa antes da balança</title>
   </head>
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <div class="site-shell">
+      <div class="demo-bar">
+        <span class="demo-dot" aria-hidden="true"></span>
+        <span>Demonstração fictícia · sem oferta médica real</span>
+        <span class="demo-bar__right">Uma experiência para testar direção, não uma página clínica publicada</span>
+      </div>
+
+      <header class="site-header" data-header>
+        <a class="wordmark" href="#top" aria-label="Dra. Vitória — voltar ao início">
+          <span class="wordmark__mark" aria-hidden="true">V</span>
+          <span>Dra. Vitória</span>
+        </a>
+        <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="main-nav" data-menu-toggle>
+          <span class="sr-only">Abrir menu</span>
+          <span></span><span></span>
+        </button>
+        <nav class="main-nav" id="main-nav" aria-label="Navegação principal" data-nav>
+          <a href="#abordagem">Abordagem</a>
+          <a href="#jornada">Jornada</a>
+          <a href="#duvidas">Dúvidas</a>
+          <a class="nav-cta" href="#interesse">Simular avaliação <span aria-hidden="true">↗</span></a>
+        </nav>
+      </header>
+
+      <main id="top">
+        <div class="cinema-ui" aria-hidden="true">
+          <div class="cinema-ui__progress"><span data-scroll-line></span></div>
+          <span class="cinema-ui__chapter" data-scroll-chapter>01 / PAUSA</span>
+          <span class="cinema-ui__percent"><span data-scroll-percent>00</span>%</span>
+        </div>
+
+        <section class="hero section-pad" data-chapter="01 / PAUSA" data-scroll-scene aria-labelledby="hero-title">
+          <div class="hero__copy reveal">
+            <p class="eyebrow"><span>01</span> Emagrecimento com contexto</p>
+            <h1 id="hero-title">O cuidado começa <em>antes</em> da balança.</h1>
+            <p class="hero__lede">Uma avaliação para olhar além do número: rotina, saúde, histórico e o que realmente cabe na sua vida.</p>
+            <div class="hero__actions">
+              <a class="button button--dark" href="#interesse">Quero ser acompanhado(a) <span aria-hidden="true">↗</span></a>
+              <a class="text-link" href="#abordagem">Conheça a abordagem <span aria-hidden="true">↓</span></a>
+            </div>
+            <div class="hero__note"><span class="note-line" aria-hidden="true"></span><span>Medicamentos só entram na conversa quando a avaliação clínica indicar.</span></div>
+          </div>
+
+          <div class="hero__visual reveal reveal--delay" aria-label="Composição abstrata que representa uma jornada de cuidado em três movimentos">
+            <div class="visual-frame">
+              <div class="depth-layer depth-layer--far"></div>
+              <div class="depth-layer depth-layer--mid"></div>
+              <div class="depth-layer depth-layer--near"></div>
+              <span class="scene-particle scene-particle--one"></span>
+              <span class="scene-particle scene-particle--two"></span>
+              <span class="scene-particle scene-particle--three"></span>
+              <span class="scene-flare"></span>
+              <div class="visual-frame__top"><span>ATLAS / 01</span><span>PAUSA · CLAREZA · PRESENÇA</span></div>
+              <div class="orbit orbit--outer"></div>
+              <div class="orbit orbit--middle"></div>
+              <div class="orbit orbit--inner"></div>
+              <div class="core-glow"></div>
+              <div class="visual-word visual-word--top">escuta</div>
+              <div class="visual-word visual-word--side">contexto</div>
+              <div class="visual-word visual-word--bottom">acompanhamento</div>
+              <div class="visual-index"><span>01</span><span class="visual-index__line"></span><span>03</span></div>
+              <div class="visual-caption">um plano não começa<br />com pressa.</div>
+            </div>
+            <div class="hero__scroll-prompt"><span class="hero__scroll-line"></span><span>desça para entrar na cena</span></div>
+          </div>
+        </section>
+
+        <div class="ticker" aria-label="Princípios da abordagem">
+          <div class="ticker__track">
+            <span>escutar primeiro</span><i aria-hidden="true">✳</i><span>entender o contexto</span><i aria-hidden="true">✳</i><span>acompanhar de perto</span><i aria-hidden="true">✳</i><span>revisar com clareza</span><i aria-hidden="true">✳</i>
+            <span aria-hidden="true">escutar primeiro</span><i aria-hidden="true">✳</i><span aria-hidden="true">entender o contexto</span><i aria-hidden="true">✳</i><span aria-hidden="true">acompanhar de perto</span><i aria-hidden="true">✳</i>
+          </div>
+        </div>
+
+        <section class="approach section-pad" id="abordagem" data-chapter="02 / ESCUTA" aria-labelledby="approach-title">
+          <div class="section-intro reveal">
+            <p class="eyebrow"><span>02</span> A abordagem</p>
+            <h2 id="approach-title">Menos ruído.<br /><em>Mais leitura.</em></h2>
+          </div>
+          <div class="approach__body">
+            <p class="large-copy reveal">Não existe uma única história por trás do peso. Existe o seu contexto — e ele merece tempo, escuta e uma conversa sem julgamento.</p>
+            <div class="principles reveal reveal--delay">
+              <article class="principle">
+                <span class="principle__number">01</span>
+                <h3>Escuta sem atalho</h3>
+                <p>Antes de qualquer decisão, entender o que acontece na vida real: rotina, sono, alimentação, saúde e expectativas.</p>
+              </article>
+              <article class="principle">
+                <span class="principle__number">02</span>
+                <h3>Clareza para escolher</h3>
+                <p>Informação acessível para conversar sobre possibilidades, limites e o que faz sentido para cada momento.</p>
+              </article>
+              <article class="principle">
+                <span class="principle__number">03</span>
+                <h3>Presença no caminho</h3>
+                <p>Acompanhamento para observar, revisar e ajustar — sem tratar uma consulta como ponto final.</p>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section class="journey section-pad" id="jornada" data-chapter="03 / JORNADA" data-scroll-journey aria-labelledby="journey-title">
+          <div class="journey__heading reveal">
+            <p class="eyebrow"><span>03</span> A jornada</p>
+            <h2 id="journey-title">Uma decisão de cada vez.</h2>
+            <p>O processo é construído em diálogo. A indicação de medicamentos, quando aplicável, depende de avaliação profissional e acompanhamento individual.</p>
+          </div>
+          <div class="journey__film" aria-hidden="true">
+            <div class="film-grid"></div>
+            <div class="film-orbit film-orbit--one"></div>
+            <div class="film-orbit film-orbit--two"></div>
+            <div class="film-core"></div>
+            <span class="film-caption" data-journey-label>03 / JORNADA</span>
+          </div>
+          <div class="journey__path" aria-label="Etapas da jornada de acompanhamento">
+            <article class="journey-step reveal">
+              <span class="journey-step__marker">01</span>
+              <div><p class="journey-step__label">Primeiro encontro</p><h3>Avaliar</h3><p>Uma conversa clínica para entender histórico, objetivos, rotina e o momento atual.</p></div>
+            </article>
+            <article class="journey-step reveal reveal--delay-1">
+              <span class="journey-step__marker">02</span>
+              <div><p class="journey-step__label">Leitura do contexto</p><h3>Organizar</h3><p>Exames e informações são reunidos para que as possibilidades fiquem mais claras.</p></div>
+            </article>
+            <article class="journey-step reveal reveal--delay-2">
+              <span class="journey-step__marker">03</span>
+              <div><p class="journey-step__label">Plano possível</p><h3>Escolher</h3><p>Quando indicado, o cuidado pode incluir estratégias e medicamentos discutidos com responsabilidade.</p></div>
+            </article>
+            <article class="journey-step reveal reveal--delay-3">
+              <span class="journey-step__marker">04</span>
+              <div><p class="journey-step__label">Acompanhamento</p><h3>Revisar</h3><p>O caminho é observado ao longo do tempo — com espaço para perguntas, ajustes e novas decisões.</p></div>
+            </article>
+          </div>
+        </section>
+
+        <section class="medication section-pad" data-chapter="04 / CONTEXTO" aria-labelledby="medication-title">
+          <div class="medication__visual reveal" aria-hidden="true">
+            <div class="medication__ring medication__ring--one"></div>
+            <div class="medication__ring medication__ring--two"></div>
+            <span class="medication__cross">+</span>
+            <span class="medication__label medication__label--one">indicação</span>
+            <span class="medication__label medication__label--two">contexto</span>
+            <span class="medication__label medication__label--three">seguimento</span>
+          </div>
+          <div class="medication__copy reveal reveal--delay">
+            <p class="eyebrow"><span>04</span> Sem atalhos de discurso</p>
+            <h2 id="medication-title">Canetas emagrecedoras também pedem <em>contexto.</em></h2>
+            <p>Medicamentos podem fazer parte do cuidado em alguns casos. A decisão depende de avaliação clínica, histórico, contraindicações, acompanhamento e uma conversa transparente sobre benefícios e riscos.</p>
+            <p class="medication__small">Esta demonstração não oferece prescrição, indicação individual ou orientação médica. Não use medicamentos sem avaliação profissional.</p>
+            <a class="text-link text-link--light" href="#duvidas">Ler dúvidas frequentes <span aria-hidden="true">↓</span></a>
+          </div>
+        </section>
+
+        <section class="questions section-pad" id="duvidas" data-chapter="05 / DÚVIDAS" aria-labelledby="questions-title">
+          <div class="section-intro reveal">
+            <p class="eyebrow"><span>05</span> Antes da conversa</p>
+            <h2 id="questions-title">Perguntas que<br /><em>merecem espaço.</em></h2>
+          </div>
+          <div class="faq-list reveal reveal--delay">
+            <details>
+              <summary><span>01</span> A avaliação já inclui uma prescrição?</summary>
+              <p>Não necessariamente. Uma avaliação serve para entender o contexto clínico e conversar sobre possibilidades. Qualquer conduta depende da análise profissional individual.</p>
+            </details>
+            <details>
+              <summary><span>02</span> As canetas emagrecedoras são indicadas para todo mundo?</summary>
+              <p>Não. Medicamentos têm indicações, contraindicações e riscos. A decisão deve ser feita por profissional habilitado, considerando o histórico e a situação de cada pessoa.</p>
+            </details>
+            <details>
+              <summary><span>03</span> O acompanhamento acontece só na primeira consulta?</summary>
+              <p>Uma jornada responsável pode precisar de acompanhamento e revisão. A frequência e o formato dependem da avaliação e do plano discutido com o profissional.</p>
+            </details>
+            <details>
+              <summary><span>04</span> Posso enviar meus exames pelo formulário?</summary>
+              <p>Não nesta demonstração. O formulário abaixo é apenas uma simulação e não armazena dados. Não insira informações de saúde ou documentos reais.</p>
+            </details>
+          </div>
+        </section>
+
+        <section class="interest section-pad" id="interesse" data-chapter="06 / CONVERSA" aria-labelledby="interest-title">
+          <div class="interest__intro reveal">
+            <p class="eyebrow"><span>06</span> O próximo passo</p>
+            <h2 id="interest-title">Comece pela<br /><em>conversa.</em></h2>
+            <p>Preencha para simular o interesse em uma avaliação inicial. Neste protótipo, nenhum dado é enviado ou armazenado.</p>
+          </div>
+          <form class="interest-form reveal reveal--delay" data-interest-form novalidate>
+            <div class="form-field"><label for="name">Como podemos chamar você?</label><input id="name" name="name" type="text" autocomplete="name" placeholder="Seu nome" aria-describedby="name-error" aria-invalid="false" required /><span class="field-error" id="name-error" data-error-for="name"></span></div>
+            <div class="form-field"><label for="email">Um e-mail para retorno simulado</label><input id="email" name="email" type="email" autocomplete="email" placeholder="voce@email.com" aria-describedby="email-error" aria-invalid="false" required /><span class="field-error" id="email-error" data-error-for="email"></span></div>
+            <div class="form-field"><label for="reason">O que você gostaria de entender?</label><select id="reason" name="reason"><option value="">Selecione uma opção</option><option>Avaliação inicial</option><option>Como funciona o acompanhamento</option><option>Possibilidades de tratamento</option><option>Ainda estou entendendo</option></select></div>
+            <label class="consent"><input type="checkbox" name="simulation" aria-describedby="simulation-error" aria-invalid="false" required /><span class="checkbox-ui" aria-hidden="true"></span><span>Entendo que este formulário é uma simulação e não substitui uma consulta médica.</span></label><span class="field-error consent-error" id="simulation-error" data-error-for="simulation"></span>
+            <button class="button button--light" type="submit">Enviar interesse simulado <span aria-hidden="true">↗</span></button>
+            <p class="form-disclaimer">Não envie dados de saúde, documentos ou informações sensíveis. Nada será armazenado neste protótipo.</p>
+            <div class="form-success" role="status" aria-live="polite" hidden><span aria-hidden="true">✳</span><strong>Simulação concluída.</strong><span>Obrigado, <b data-success-name></b>. Em um projeto real, aqui entraria a próxima etapa de contato seguro.</span></div>
+          </form>
+        </section>
+      </main>
+
+      <footer class="site-footer">
+        <div class="footer-top"><a class="wordmark wordmark--footer" href="#top"><span class="wordmark__mark" aria-hidden="true">V</span><span>Dra. Vitória</span></a><p>Emagrecimento com contexto,<br />clareza e acompanhamento.</p><a class="footer-arrow" href="#top" aria-label="Voltar ao topo">↑</a></div>
+        <div class="footer-bottom"><span>© 2026 · demonstração fictícia</span><span>Sem CRM · sem oferta médica real · sem dados armazenados</span></div>
+      </footer>
+    </div>
+    <script type="module" src="/src/main.js"></script>
   </body>
 </html>
